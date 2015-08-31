@@ -1,0 +1,13 @@
+package user;
+
+public class UserFriend {
+	public static boolean getIsFriend(String user1, String user2){
+		
+		return true;
+	}
+	
+	public static boolean hasSentRequest(String fromuser, String touser){
+		
+		return true;
+	}
+}

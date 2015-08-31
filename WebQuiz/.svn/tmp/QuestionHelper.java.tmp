@@ -1,0 +1,24 @@
+package quiz;
+
+public class QuestionHelper {
+	public static Question getQuestion(String questionType, String questionId){
+		switch(questionType){
+		case "QR":
+			return new QuestionResponse(questionType, questionId);
+		//case "FIB":
+			//return new FillInBlank(questionType, questionId);
+		case "MC":
+			return new MultipleChoice(questionType, questionId);
+		//case "PR":
+			//return new PictureResponse(questionType, questionId);
+		case "MA":
+			return new MultipleAnswer(questionType, questionId);
+		case "MCMA":
+			return new MultiChoiceMultiAnswer(questionType, questionId);
+		//case "MATCH":
+			//return new Matching(questionType, questionId);
+		}
+			
+		return null;
+	}
+}

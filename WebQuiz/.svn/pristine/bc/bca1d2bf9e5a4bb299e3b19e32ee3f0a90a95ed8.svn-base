@@ -1,0 +1,162 @@
+package user;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+/**
+ * Servlet implementation class MyPageServlet
+ */
+@WebServlet("/MyPageServlet")
+public class MyPageServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+    /**
+     * @see HttpServlet#HttpServlet()
+     */
+    public MyPageServlet() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		HttpSession session = request.getSession();
+		String visitor = (String) session.getAttribute("username");
+		String pageowner = request.getParameter("id");
+		String tab = request.getParameter("tab");
+		if(tab == null){
+			tab = "qt";
+		}
+		String index = request.getParameter("ind");
+		if(index == null){
+			index = "da";
+		}
+		String orderStr = request.getParameter("order");
+		int order;
+		if(orderStr == null){
+			order = 1;
+		}else{
+			order = Integer.parseInt(orderStr);
+		}
+		
+		// get page owner information
+		UserAccount pageAcc = UserAccount.getUserInfo(pageowner);
+		if(pageAcc == null){
+			RequestDispatcher rd = request.getRequestDispatcher("invalid-user.jsp");
+			if(pageowner == null)
+				request.setAttribute("errorMsg","User name is not specified.");
+			else
+				request.setAttribute("errorMsg","User: "+pageowner+" does not exist!");
+			rd.forward(request,response);
+		}
+		
+		int friendship;
+		if(visitor.equals(pageowner))
+			friendship = 0; // visit own page
+		else if(UserFriend.getIsFriend(visitor,pageowner))
+			friendship = 1; // visitor is owner's friend
+		else if(!visitor.equals("guest"))
+			friendship = 2; // visitor is not owner's friend but is a user
+		else
+			friendship = 3; // visitor is a guest
+		
+		// Print html title
+		response.setContentType("text/html; charset=UTF-8");
+		PrintWriter out = response.getWriter();
+		out.println(printJavascript());
+		out.println("<!DOCTYPE html>");
+		out.println("<head>");
+		out.println("<meta charset=\"UTF-8\" />");
+		out.println("<title>My Page</title>");
+		out.println("</head>");
+		out.println("<body>");
+		
+		// Display name
+		out.println("<h1>"+pageAcc.displayname+" Personal Page</h1>");
+		
+		// Add friend or send message button 
+		if(friendship == 1){ // already friend
+			out.println("<form action=\"SendMessgeServlet\" method=\"get\">");  //#go to peichen's servlet
+			out.println("<input type=\"submit\" value=\"Send Message\">");
+			out.println("<input type=\"hidden\" name=\"receiver\" value=\""+pageowner+"\">");
+			out.println("</form>");
+		}else if(friendship == 2){  // is legit user but not friend
+			out.println("<form action=\"AddFriendServlet\" method=\"get\">");  //#go to peichen's servlet
+			out.println("<input type=\"hidden\" name=\"receiver\" value=\""+pageowner+"\">");  //#sync name with peichen 
+			if(UserFriend.hasSentRequest(visitor,pageowner)){  //#sync method with peichen
+				out.println("<input type=\"submit\" value=\"Friend Request Sent\" disabled>");
+			}else{
+				out.println("<input type=\"submit\" value=\"Add Friend\">");
+			}
+			out.println("</form>");
+		}
+		out.println("<br>");
+		
+		
+		//Display Tabs
+		out.println("<table style=\"width:80%\">");
+		out.println("<tr>");
+		out.println("<th><a href=\"MyPageServlet?id="+pageowner+"&tab=qt&ind=da&order=1\">Quiz Taking History</a></th>");
+		out.println("<th><a href=\"MyPageServlet?id="+pageowner+"&tab=qc&ind=da&order=1\">Quiz Creating History</a></th>");
+		out.println("<th><a href=\"MyPageServlet?id="+pageowner+"&tab=ac\">Achievement</a></th>");
+		out.println("<th><a href=\"MyPageServlet?id="+pageowner+"&tab=as\">Account Setting</a></th>");
+		out.println("</tr>");
+		out.println("</table>");
+		
+		//Display content
+		if(tab.equals("quiztake")){
+			out.println(getQuizTakeHistHTML(pageowner,friendship,
+					pageAcc.privacy_quiz_take,pageAcc.privacy_quiz_score,index,order));
+		}else if(tab.equals("quizcreate")){
+			;
+		}else if(tab.equals("achievement")){
+			;
+		}else if(tab.equals("privacy")){ 
+			; 
+		}else{
+			//error handling
+		}
+		
+		
+		out.println("</body>");
+		out.println("</html>");
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+	}
+	
+	protected String printJavascript(){
+		return "";
+	}
+	
+	protected String getQuizTakeHistHTML(String owner,
+										 int 	friendship,
+										 int 	privacy_quiz_take,
+										 int 	privacy_quiz_score, 
+										 String index, 
+										 int order)
+	{
+		StringBuilder sb = new StringBuilder();
+		if(friendship > privacy_quiz_take){ // do not display
+			sb.append("<h2>User do not want to share this information</h2>\n");
+		}else{
+			
+		}
+		return null;
+	}
+
+}

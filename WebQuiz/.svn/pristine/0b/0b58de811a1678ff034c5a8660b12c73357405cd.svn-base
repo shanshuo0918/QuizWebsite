@@ -1,0 +1,50 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, quiz.*, java.text.*, database.*, util.*" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%
+MyQuiz myquiz = new MyQuiz(request.getParameter("ID"), 1);
+//MyQuiz myquiz = new MyQuiz("Q1",1);
+%>
+<title>Insert title here</title>
+</head>
+<body>
+<h3>You are going to editing this quiz!</h3>
+<h4>Please review the following quiz information! You can modify any of them if you want!</h4>
+<form action="EditQuestionServlet" method="post">
+Name: <%=myquiz.getQuizName() %><br>
+Description: <br><textArea name="quizDescription" rows="10" cols="60" ><%= myquiz.getQuizDescription() %></textarea><br>
+Tag:<input type="text" name="tag" value="<%= Helper.generateTags(myquiz.getTag()) %>"><br>
+Category:<input type="text" name="category" value="<%=myquiz.getCategory()%>"><br>
+<%
+	if (myquiz.isPractice()) {
+		out.println("<input type=\"checkbox\" name=\"isPracticeMode\" checked> Allow Practice Mode");
+	} else {
+		out.println("<input type=\"checkbox\" name=\"isPracticeMode\"> Allow Practice Mode");
+	}
+
+	if (myquiz.isRandomOrder()) {
+		out.println("<input type=\"checkbox\" name=\"isRandomOrder\" checked> Random Order<br>");
+	} else {
+		out.println("<input type=\"checkbox\" name=\"isRandomOrder\"> Random Order<br>");
+	}
+	
+	if (myquiz.isSinglePage()) {
+		out.println("<input type=\"checkbox\" name=\"isSinglePage\" checked> All Question in Single Page");
+	} else {
+		out.println("<input type=\"checkbox\" name=\"isSinglePage\"> All Question in Single Page");
+	}
+	
+	if (myquiz.isCorrection()) {
+		out.println("<input type=\"checkbox\" name=\"isCorrection\" checked>Immediate Correction<br>");
+	} else {
+		out.println("<input type=\"checkbox\" name=\"isCorrection\">Immediate Correction<br>");
+	}
+%>
+<input type="submit" value="Edit Question">
+</form>
+</body>
+</html>

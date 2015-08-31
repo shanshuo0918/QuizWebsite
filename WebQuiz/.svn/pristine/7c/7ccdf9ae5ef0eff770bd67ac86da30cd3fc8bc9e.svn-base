@@ -1,0 +1,37 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, quiz.*, database.*, java.text.*" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title><% 
+MyQuiz myquiz = new MyQuiz(request.getParameter("id"), 1);
+%>
+<%=myquiz.getQuizName() %>
+</title>
+</head>
+<body>
+<%
+Connection con = DBConnection.getConnection();
+Statement stmt = con.createStatement();
+String query = new String("SELECT * FROM quiz_rating WHERE quizid = \""+request.getParameter("id") + "\"");
+ResultSet rs = stmt.executeQuery(query);
+while(rs.next()) {
+	out.println("<p>" + rs.getString("username") + "</p>");
+	out.println("<p>" + rs.getString("rating") + "</p>");
+	out.println("<p>" + rs.getString("review") + "</p>");
+}
+String querytwo = new String("SELECT quizName FROM quiz_summary WHERE quizid = \""+request.getParameter("id") + "\"");
+rs = stmt.executeQuery(querytwo);
+rs.next();
+String quizName = rs.getString("quizName");
+%>
+<form action="QuizSummaryPage.jsp" method="POST">
+<%
+out.println("<input name = quizName type = \"hidden\" value = \"" + quizName + "\"/></a>");
+%>
+<input type="submit" value="Back" />
+</form>
+</body>
+</html>

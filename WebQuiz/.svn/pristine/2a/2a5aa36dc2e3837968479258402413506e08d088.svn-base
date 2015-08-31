@@ -1,0 +1,103 @@
+package quiz;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import util.Helper;
+
+/**
+ * Servlet implementation class CompletePracticeServlet
+ */
+@WebServlet("/CompletePracticeServlet")
+public class CompletePracticeServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+    /**
+     * @see HttpServlet#HttpServlet()
+     */
+    public CompletePracticeServlet() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		HttpSession session = request.getSession();		
+		List<Question> questionList = new ArrayList<Question>();
+		String quizID = request.getParameter("ID");
+		HashMap<Question, Integer> practiceRecord = new HashMap<Question, Integer>();
+		String username = (String)session.getAttribute("username");
+		Set<String> acheivements = user.Achievement.getAchievement(username);
+		if (acheivements != null) {
+			if (!acheivements.contains("Practice makes perfect")) {
+				Helper.addAchievement(username, "Practice Makes Perfect");
+			}
+		} else {
+			Helper.addAchievement(username, "Practice Makes Perfect");
+		}
+		
+		if (session.getAttribute("practiceRecord") == null) {
+			MyQuiz quiz = new MyQuiz(quizID, 1);
+			questionList = quiz.getQuestionList();
+			for (int i = 0; i < questionList.size(); i ++) {
+				practiceRecord.put(questionList.get(i), 0);
+			}
+		} else {
+			practiceRecord = (HashMap<Question, Integer>)session.getAttribute("practiceRecord");
+			Set<Question> questionArray = practiceRecord.keySet();
+			for (Question question : questionArray) {
+				questionList.add(question);
+			}			
+		}
+		
+		List<String> userAnswers = new ArrayList<String>();
+		List<String> correctAnswer = new ArrayList<String>();
+		
+		
+		for (int i = 0; i < questionList.size(); i++) {
+			String userAnswer = questionList.get(i).getUserAnswer(request);
+			userAnswers.add(userAnswer);
+			correctAnswer.add(questionList.get(i).getAnswer());
+			if (questionList.get(i).getScore(userAnswer) == questionList.get(i).getMaxScore()) {
+				practiceRecord.put(questionList.get(i), practiceRecord.get(questionList.get(i))+ 1);
+				if (practiceRecord.get(questionList.get(i)) >= 3) {
+					practiceRecord.remove(questionList.get(i));
+				}
+			}
+		}
+		
+		session.setAttribute("userAnswer", userAnswers);
+		session.setAttribute("correctAnswer", correctAnswer);
+		
+		
+		System.out.println(practiceRecord.values());
+		
+		session.setAttribute("practiceRecord", practiceRecord);
+		
+		RequestDispatcher dispatcher = request.getRequestDispatcher("PracticeSummary.jsp?ID=" + quizID);
+		dispatcher.forward(request, response);
+		
+	}
+
+}

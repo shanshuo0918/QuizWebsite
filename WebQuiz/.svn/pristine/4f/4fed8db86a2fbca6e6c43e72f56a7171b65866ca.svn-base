@@ -1,0 +1,121 @@
+package quiz;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+
+import javax.servlet.http.HttpServletRequest;
+
+import database.DBConnection;
+
+public class MultipleChoice extends Question {
+	protected final String choices;
+	
+	public MultipleChoice(String questionType, String questionID) {
+		super(questionType, questionID);
+		String query = "SELECT * FROM " + questionTypeTable + " WHERE questionID = \"" + questionID + "\"";
+		String tempChoices = "";
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			rs.next();
+			tempChoices = rs.getString(7);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		this.choices = tempChoices;
+	}
+	
+	public MultipleChoice(String quizID, int timeLimit,
+			String question, String answer, int score, String choices) {
+		super("MC", quizID, timeLimit, question, answer, score);
+		this.choices = choices;
+	}
+	
+	@Override
+	public String getUserAnswer(HttpServletRequest request) {
+		String[] userAnswer = request.getParameterValues("answer_"+ questionID);
+		String result = "";
+		if (userAnswer == null) {
+			return result;
+		}
+		result += userAnswer[0];
+		return result;
+	}
+	
+	@Override
+	public String doQuizPage() {
+		StringBuilder page = new StringBuilder();
+		ArrayList<String> choiceList = getChoiceList();
+		page.append("This is a Multiple-Choice question, please select one option!");
+		page.append("<h4>Question: " + question + "</h4>");
+		//page.append("<form>");
+		for (int i = 0; i < choiceList.size(); i ++) {
+			page.append("<input type=\"radio\" name=\"answer_" + questionID + "\" value=\"" + choiceList.get(i) + "\"/> " + choiceList.get(i) + " <br>");
+		}
+		//page.append("</form>");
+		return page.toString();
+	}
+	
+	@Override
+	public void updateQuestion(HttpServletRequest request) {
+		String question = request.getParameter("questionDescription");
+		String answer = request.getParameter(request.getParameter("options"));
+		String options = QuestionHelper.generateOptions(request);
+		int timeLimit = 0;
+		if (request.getParameter("time") != "") {
+			timeLimit = Integer.parseInt(request.getParameter("time"));
+		}
+		String query = "Update " + questionTypeTable + " SET question = \"" + question + "\", answer = \"" + answer +
+				"\", timeLimit = \"" + timeLimit + "\", options = \"" + options +  "\" WHERE questionID = \"" + questionID + "\";";
+		System.out.println(query);
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			stmt.executeUpdate(query);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	@Override
+	public String editQuestionPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<h3>You are creating a Fill-In-Blank question!</h3>\n");
+		page.append("Question (Please type your question in the textAera below): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"10\" cols=\"60\" required>" + question + "</textarea><br>");
+		page.append("Anwser (Please input any possible answer in the blanks, and select the right answer, you answer should have 5 or less options): <br>");
+		
+		page.append("<input type=\"radio\" name=\"options\" value=\"option1\"><input type=\"text\" name=\"option1\"/><br>");
+		page.append("<input type=\"radio\" name=\"options\" value=\"option2\"><input type=\"text\" name=\"option2\"/><br>");
+		page.append("<input type=\"radio\" name=\"options\" value=\"option3\"><input type=\"text\" name=\"option3\"/><br>");
+		page.append("<input type=\"radio\" name=\"options\" value=\"option4\"><input type=\"text\" name=\"option4\"/><br>");
+		page.append("<input type=\"radio\" name=\"options\" value=\"option5\"><input type=\"text\" name=\"option5\"/><br>");
+		
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): "
+				+ "<input type=\"text\" name=\"time\" value =\"" + timeLimit + "\"><br>");
+		return page.toString();
+	}
+	
+	// Not tested
+	protected ArrayList<String> getChoiceList() {
+		ArrayList<String> choiceList = new ArrayList<String>();
+		int start = 0;
+		int end = 0;
+		while (end < choices.length() - 1) {
+			if (choices.charAt(end) == '|') {
+				System.out.println(start);
+				System.out.println(end);
+				choiceList.add(choices.substring(start, end));
+				start = end + 1;
+			}
+			end ++;
+		}
+		choiceList.add(choices.substring(start));
+		return choiceList;
+	}		
+}

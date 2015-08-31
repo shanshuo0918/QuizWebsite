@@ -1,0 +1,46 @@
+package quiz;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import database.DBConnection;
+
+public class Matching extends Question {
+	protected final String choices;
+	
+	public Matching(String questionType, String questionID) {
+		super(questionType, questionID);
+		String query = "SELECT * FROM " + questionTypeTable + " WHERE questionID == \"" + questionID + "\"";
+		String tempChoices = "";
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			rs.next();
+			tempChoices = rs.getString(7);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		this.choices = tempChoices;
+	}
+	
+	public Matching(String questionType, String quizID, int timeLimit,
+			String question, String answer, int score, String choices) {
+		super(questionType, quizID, timeLimit, question, answer, score);
+		this.choices = choices;
+	}
+	
+	public int getScore() {
+		return 0;
+	}
+	
+	@Override
+	public String doQuizPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("Matching Question ");
+		return page.toString();
+	}
+	
+}

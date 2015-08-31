@@ -1,0 +1,95 @@
+package quiz;
+
+import java.io.IOException;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+/**
+ * Servlet implementation class MultiPageQuizServlet
+ */
+@WebServlet("/MultiPageQuizServlet")
+public class MultiPageQuizServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+    /**
+     * @see HttpServlet#HttpServlet()
+     */
+    public MultiPageQuizServlet() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		String quizID = request.getParameter("quizID");
+		MyQuiz quiz = new MyQuiz(quizID, 1);
+		HttpSession session = request.getSession();
+		
+		String username = "GodShan";
+		if (session.getAttribute("username") != null) {
+			username = (String)session.getAttribute("username"); 
+		}
+		
+		System.out.println(username);
+		List<Question> questionList = (List<Question>)session.getAttribute("questionList");
+		int currentIndex = (Integer)session.getAttribute("currentIndex");
+		Question question = questionList.get(currentIndex);
+		
+		String answer = question.getUserAnswer(request);
+		int score = question.getScore(answer);
+		List<String> userAnswer = (List<String>)session.getAttribute("userAnswer");
+		List<String> correctAnswer = (List<String>)session.getAttribute("correctAnswer");
+		List<String> userScoreList = (List<String>)session.getAttribute("userScoreList");
+		userAnswer.add(answer);
+		correctAnswer.add(question.getAnswer());
+		userScoreList.add(score + " / " + question.getMaxScore());
+		
+		session.setAttribute("userAnswer", userAnswer);
+		session.setAttribute("correctAnswer", correctAnswer);
+		session.setAttribute("userScoreList", userScoreList);
+		session.setAttribute("userScore", (Integer)session.getAttribute("userScore") + score);
+		
+		currentIndex ++;
+		
+		if (currentIndex == questionList.size()) {
+			int total = (Integer)session.getAttribute("userScore");
+			
+			long timeSpend = 10000;
+			if (session.getAttribute("startTime") != null) {
+				long startTime = (long)session.getAttribute("startTime");
+				long endTime = System.currentTimeMillis();
+				timeSpend = endTime - startTime;
+			}
+			quiz.saveQuizEvent(quiz.getId(), username, timeSpend, total);
+			request.setAttribute("ID", quiz.getId());
+			System.out.println(quiz.getId());
+			RequestDispatcher dispatcher = request.getRequestDispatcher("QuizResult.jsp");
+			dispatcher.forward(request, response);
+			
+		} else {
+			session.setAttribute("currentIndex", currentIndex);
+			RequestDispatcher dispatcher = request.getRequestDispatcher("MultiPageQuiz.jsp?ID=" + quiz.getId());
+			dispatcher.forward(request, response);
+		}
+				
+		
+		// TODO Auto-generated method stub
+	}
+
+}

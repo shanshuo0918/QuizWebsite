@@ -1,0 +1,53 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, quiz.*, java.text.*" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Your Quiz Result</title>
+</head>
+<body>
+<% 
+//String quizName = request.getParameter("quizName");
+//String username = (String)session.getAttribute("user");
+String username = "lingzhi";
+String quizName = "Test Quiz";
+MyQuiz myquiz = new MyQuiz(quizName); 
+MyQuiz.QuizEvent event = myquiz.getUserLatestEvent(quizName, username);
+%>
+<ul>
+<li>Total Score: <%=myquiz.getTotalScore() %></li>
+<li>Your Score: <%=event.getScore() %></li>
+<li>Correct Answers</li>
+<li>Your Answers</li>
+<li>Your Score: <%=event.getScore() %></li>
+<li>Your Performance
+<ol>
+<%
+for(MyQuiz.QuizEvent e: myquiz.getUserRecentEvents(username,5)) {
+	out.println("<li>" + e.getUserName() + " " + e.getScore() + " " + e.getTimeUsed() + "</li>");
+}
+%>
+</ol>
+</li>
+<li>Top Performance
+<ol>
+<%
+for(MyQuiz.QuizEvent q: myquiz.getHighScoreEvents(5)) {
+	out.println("<li>" + q.getUserName() + " " + q.getScore() + " " + q.getTimeUsed() + "</li>");
+}
+%>
+</ol>
+</li>
+</ul>
+<p>You can rate and review this quiz:<p>
+<form action="SaveRateReviewServ" method="post">
+<%
+out.println("<li>Rating<input type=\"text\" name=rating /></li>");
+out.println("<li>Review<input type=\"text\" name=review /></li>");
+%>
+<input type="submit" value="Submit"/>
+</form>
+</body>
+</html>

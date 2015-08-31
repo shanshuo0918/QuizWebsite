@@ -1,0 +1,43 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ page import="java.util.*, java.sql.*, quiz.*, java.text.*, database.*, util.*" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%
+//MyQuiz myquiz = new MyQuiz(request.getParameter("quizID"), 1);
+MyQuiz myquiz = new MyQuiz("Q1",1);
+List<Question> questionList = myquiz.getQuestionList();
+%>
+<title>Insert title here</title>
+</head>
+<body>
+<h4>Step2: You can select ANY of the following question you want to edit!</h4>
+
+<table style="width:100%">
+  <tr>
+    <th>Question Index</th>
+    <th>Question Type</th>
+    <th>Question</th>
+    <th>Button</th>
+  </tr>
+<%
+	for (int i = 1; i <= questionList.size(); i++) {
+		out.println("<tr>");
+		out.println("<td>" + i + "</td>");
+		out.println("<td>" + questionList.get(i-1).getType() + "</td>");
+		out.println("<td>" + questionList.get(i-1).getQuestion() + "</td>");
+		out.println("<td>" + "edit" + "</td>");
+		out.println("</tr>");
+	}	
+%>
+</table>
+<hr>
+If you have finished editing question, please click here to finish! <br>
+<form action="FinishCreateQuizServlet" method="post">
+<input type="submit" value="I'm done!">
+</form>
+
+</body>
+</html>

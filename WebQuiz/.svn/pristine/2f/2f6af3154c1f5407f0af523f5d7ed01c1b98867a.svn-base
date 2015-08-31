@@ -1,0 +1,112 @@
+package quiz;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+
+import util.*;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+/**
+ * Servlet implementation class NewQuestionServlet
+ */
+@WebServlet("/NewQuestionServlet")
+public class NewQuestionServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+    /**
+     * @see HttpServlet#HttpServlet()
+     */
+    public NewQuestionServlet() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		System.out.println(request.getParameter("quizName"));
+		String quizName = request.getParameter("quizName");
+		
+		if (Helper.existQuizName(quizName)) {
+			RequestDispatcher dispatcher = request.getRequestDispatcher("CreateQuiz.jsp");
+			dispatcher.forward(request, response);
+			
+		}
+		String quizDescription = request.getParameter("quizDescription");
+		List<String>tag = Helper.parseTags(request.getParameter("tag"));
+		
+		Boolean isPracticeMode = false;
+		if (request.getParameter("isPracticeMode") != null) {
+			isPracticeMode = true;
+		}
+		Boolean isRandomOrder =  false;
+		if (request.getParameter("isRandomOrder") != null) {
+			isRandomOrder = true;
+		}
+		Boolean isSinglePage = false;
+		if (request.getParameter("isSinglePage") != null) {
+			isSinglePage = true;
+		}
+		Boolean isCorrection = false;
+		if (request.getParameter("isCorrection") != null) {
+			isCorrection = true;
+		}
+		List<Question> questionList = new ArrayList<Question>();
+		String category = request.getParameter("category");
+		
+		HttpSession session = request.getSession();
+		
+		session.setAttribute("quizName", quizName);
+		if (session.getAttribute("username") != null) {
+			session.setAttribute("creator", session.getAttribute("username"));
+		} else {
+			session.setAttribute("creator", "GODSHAN");
+		}
+		
+		session.setAttribute("quizDescription", quizDescription);
+		session.setAttribute("tag", tag);
+		session.setAttribute("isPracticeMode", isPracticeMode);
+		session.setAttribute("isRandomOrder", isRandomOrder);
+		session.setAttribute("isSinglePage", isSinglePage);
+		session.setAttribute("isCorrection", isCorrection);
+		session.setAttribute("questionList", questionList);
+		session.setAttribute("category", category);
+		session.setAttribute("totalScore", 0);
+		
+		/*Enumeration keys = session.getAttributeNames();
+		while (keys.hasMoreElements())
+		{
+			String key = (String)keys.nextElement();
+			System.out.println(key + ": " + session.getValue(key));
+		}*/
+		//System.out.println(session.getAttribute("quizName"));
+		//System.out.println(((List<String>)session.getAttribute("tag")).get(0));
+		Enumeration enames = session.getAttributeNames();
+		while(enames.hasMoreElements()) {
+			String name = (String) enames.nextElement();
+			//String value = (String)session.getAttribute(name);
+			System.out.println(name + ": ");
+		}
+		RequestDispatcher dispatcher = request.getRequestDispatcher("SelectQuestionType.jsp");
+		dispatcher.forward(request, response);
+		
+	}
+
+}

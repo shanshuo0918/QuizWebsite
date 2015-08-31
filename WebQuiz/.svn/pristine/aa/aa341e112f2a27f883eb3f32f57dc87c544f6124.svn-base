@@ -1,0 +1,36 @@
+package quiz;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import database.DBConnection;
+
+public class QuizHelper {
+	public QuizHelper() {
+		
+	}
+	
+	public Quiz getQuiz(String quizName) {
+		Connection con = DBConnection.getConnection();
+		try {
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("SELECT quizName FROM quiz_summary"
+							+ " WHERE quizName = \"" + quizName + "\"");
+			if(rs.isBeforeFirst())
+				return new MyQuiz(quizName);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+}

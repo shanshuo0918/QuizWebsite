@@ -1,0 +1,88 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, quiz.*, java.text.*, database.*" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>
+<%--
+String quizName;
+Connection con = DBConnection.getConnection();
+Statement stmt = con.createStatement();
+String query = new String("SELECT quizName FROM quiz_summary WHERE quizID = \""+request.getParameter("ID") + "\"");
+ResultSet rs = stmt.executeQuery(query);
+if(rs.next()) {
+	quizName = rs.getString("quizName");
+}
+--%>quizName</title>
+</head>
+<body>
+<%--
+//String quizName = request.getParameter("quizID");
+MyQuiz myquiz = new MyQuiz(request.getParameter("ID"), 1); 
+--%>
+<%
+MyQuiz myquiz = new MyQuiz("Test Quiz");
+%>
+<ul>
+<li>Quiz Name: <%=myquiz.getQuizName() %></li>
+<li>Category: <%=myquiz.getCategory() %></li>
+<%
+out.println("<li>Tags: ");
+for (String tag: myquiz.getTag()) {
+	out.println(tag + " ");
+}
+out.println("</li>");
+%>
+<li>Total Score: <%=myquiz.getTotalScore() %></li>
+<li>Quiz Description: <%=myquiz.getQuizDescription() %></li>
+<%
+NumberFormat nf = NumberFormat.getInstance();
+nf.setMaximumFractionDigits(1);
+nf.setMinimumFractionDigits(1);
+out.println("<li> Rating:" + nf.format(myquiz.getAvgRating()) + "</li>");
+%>
+<%
+out.println("<li><a href=\"Review.jsp?ID=" +myquiz.getId() + "\">See reviews</a></li>");
+out.println("<li><a href=\"StartQuizServlet?ID=" +myquiz.getId() + "\">Start!</a></li>");
+out.println("<li><a href=\"Practice.jsp?ID=" +myquiz.getId() + "\">Practice Mode</a></li>");
+out.println("<li><a href=\"Challenge.jsp?ID=" +myquiz.getId() + "\">Challenge my friends!</a></li>");
+out.println("<li><a href=\"EditQuiz.jsp?ID=" +myquiz.getId() + "\">Edit Quiz</a></li>");
+%>
+<li>Highest Score: <%=myquiz.getBestScore() %></li>
+<li>Lowest Score: <%=myquiz.getLowestScore() %></li>
+<% 
+out.println("<li> Average Score:" + nf.format(myquiz.getAvgScore()) + "</li>");
+%>
+<li>Total # of takers: <%=myquiz.getTakenTimes() %></li>
+<li>Top Performers
+<ol>
+<%
+for(MyQuiz.QuizEvent q: myquiz.getHighScoreEvents(5)) {
+	out.println("<li>" + q.getUserName() + " " + q.getScore() + " " + q.getTimeUsedFormat() + "</li>");
+}
+%>
+</ol>
+</li>
+<li>Top Performers in the last day
+<ol>
+<%
+for(MyQuiz.QuizEvent q: myquiz.getHighScoreEventsLastDay(5)) {
+	out.println("<li>" + q.getUserName() + " " + q.getScore() + " " + q.getTimeUsedFormat() + "</li>");
+}
+%>
+</ol>
+</li>
+<li>Recent Takers
+<ol>
+<%
+for(MyQuiz.QuizEvent q: myquiz.getRecentTakenEvents(5)) {
+	out.println("<li>" + q.getUserName() + " " + q.getScore() + " " + q.getTimeUsedFormat() + "</li>");
+}
+%>
+</ol>
+</li>
+</ul>
+</body>
+</html>

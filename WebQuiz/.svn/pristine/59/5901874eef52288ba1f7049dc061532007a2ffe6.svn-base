@@ -1,0 +1,74 @@
+package quiz;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import util.*;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+/**
+ * Servlet implementation class NewQuestionServlet
+ */
+@WebServlet("/NewQuestionServlet")
+public class NewQuestionServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+    /**
+     * @see HttpServlet#HttpServlet()
+     */
+    public NewQuestionServlet() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		String quizName = request.getParameter("quziName");
+		String creator = request.getParameter("creator");
+		String quizDescription = request.getParameter("quizDescription");
+		List<String>tag = Helper.parseTags(request.getParameter("tag"));
+		
+		Boolean practiceMode = Boolean.parseBoolean(request.getParameter("practiceMode"));
+		Boolean isRandomOrder = Boolean.parseBoolean(request.getParameter("isRandomOrder"));
+		Boolean isSinglePage = Boolean.parseBoolean(request.getParameter("isSinglePage"));
+		Boolean isCorrection = Boolean.parseBoolean(request.getParameter("isCorrection"));
+		List<Question> questionList = new ArrayList<Question>();
+		String category = request.getParameter("category");
+		
+		HttpSession session = request.getSession();
+		
+		session.setAttribute("quizName", quizName);
+		session.setAttribute("creator", creator);
+		session.setAttribute("quizeDescription", quizDescription);
+		session.setAttribute("tag", tag);
+		session.setAttribute("practiceMode", practiceMode);
+		session.setAttribute("isRandomOrder", isRandomOrder);
+		session.setAttribute("isSinglePage", isSinglePage);
+		session.setAttribute("isCorrection", isCorrection);
+		session.setAttribute("questionList", questionList);
+		session.setAttribute("category", category);
+		session.setAttribute("totalScore", 0);
+		
+		RequestDispatcher dispatcher = request.getRequestDispatcher("SelectQuestionType.jsp");
+		dispatcher.forward(request, response);
+		
+	}
+
+}

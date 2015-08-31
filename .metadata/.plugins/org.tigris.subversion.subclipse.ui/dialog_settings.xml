@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<item value="118" key="CommitDialog.location.y"/>
+	<item value="25" key="CommitDialog.location.x"/>
+	<item value="0" key="ResourceSelectionTree.mode"/>
+	<item value="500" key="CommitDialog.weights.0"/>
+	<item value="500" key="CommitDialog.weights.1"/>
+	<item value="401" key="CommitDialog.size.y"/>
+	<item value="1130" key="CommitDialog.size.x"/>
+	<section name="CommitWizard">
+		<item value="500" key="VWeight2"/>
+		<item value="500" key="VWeight1"/>
+		<item value="false" key="ShowCompare"/>
+	</section>
+	<section name="NewLocationWizard">
+		<list key="ConfigurationWizardMainPage.STORE_URL_ID">
+			<item value="svn+ssh://myth.stanford.edu/afs/ir.stanford.edu/users/c/h/chishuen/cs108/proj"/>
+		</list>
+	</section>
+</section>

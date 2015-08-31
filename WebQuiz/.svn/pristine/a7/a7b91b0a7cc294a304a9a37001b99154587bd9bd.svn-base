@@ -1,0 +1,84 @@
+package quiz;
+
+public class QuestionHelper {
+	public static Question getQuestion(String questionType, String questionId){
+		switch(questionType){
+		case "QR":
+			return new QuestionResponse(questionType, questionId);
+		case "FIB":
+			return new FillInBlank(questionType, questionId);
+		case "MC":
+			return new MultipleChoice(questionType, questionId);
+		case "PR":
+			return new PictureResponse(questionType, questionId);
+		case "MA":
+			return new MultipleAnswer(questionType, questionId);
+		case "MCMA":
+			return new MultiChoiceMultiAnswer(questionType, questionId);
+		case "MATCH":
+			return new Matching(questionType, questionId);
+		}
+			
+		return null;
+	}
+	
+	public static String createQuestionPage(String questionType) {
+		switch(questionType){
+		case "QR":
+			return createQRPage();
+		case "FIB":
+			return createFIBPage();
+		case "MC":
+			return createMCPage();
+		case "PR":
+			return "";
+		case "MA": 
+			return "";
+		case "MCMA": 
+			return "";
+		case "MATCH": 
+			return "";
+		}	
+		return null;
+	}
+	
+	private static String createQRPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<h3>You are creating a Question-Response question!</h3>\n");
+		page.append("Question (Please type your question in the textAera below): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"10\" cols=\"60\" required></textarea><br>");
+		page.append("Anwser (If you have mutiple possible anwsers, please put them in different line): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"5\" cols=\"60\" required></textarea><br>");
+		page.append("Score (How many points for the question): <input type=\"text\" name=\"score\" required/><br>");
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): <input type=\"text\" name=\"time\"/><br>");
+		page.append("<input type=\"hidden\" name=\"type\" value=\"QR\"></input><br>");
+		return page.toString();
+	}
+	
+	private static String createFIBPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<h3>You are creating a Fill-In-Blank question!</h3>\n");
+		page.append("Question (Please type your question in the textAera below): <br>");
+		page.append("<textarea name=\"question1\" rows=\"10\" cols=\"60\" required></textarea><br>");
+		page.append("<textarea name=\"question2\" rows=\"10\" cols=\"60\" required></textarea><br>");
+		page.append("Anwser (If you have mutiple possible anwsers, please put them in different line): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"5\" cols=\"60\" required></textarea><br>");
+		page.append("Score (How many points for the question): <input type=\"text\" name=\"score\" required/><br>");
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): <input type=\"text\" name=\"time\"/><br>");
+		page.append("<input type=\"hidden\" name=\"type\" value=\"QR\"></input><br>");
+		return page.toString();
+	}
+	
+	private static String createMCPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<h3>You are creating a Multiple-Choice question!</h3>\n");
+		page.append("Question (Please type your question in the textAera below): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"10\" cols=\"60\" required></textarea><br>");
+		page.append("Anwser (If you have mutiple possible anwsers, please put them in different line): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"5\" cols=\"60\" required></textarea><br>");
+		page.append("Score (How many points for the question): <input type=\"text\" name=\"score\" required/><br>");
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): <input type=\"text\" name=\"time\"/><br>");
+		page.append("<input type=\"hidden\" name=\"type\" value=\"QR\"></input><br>");
+		return page.toString();
+	}
+}

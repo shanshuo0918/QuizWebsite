@@ -1,0 +1,886 @@
+package quiz;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import util.Helper;
+import database.MyDBInfo;
+import database.DBConnection;
+
+public class MyQuiz implements Quiz{
+	
+	public final class QuizEvent {
+		private final String quizID;
+		private final String username;
+		private final Timestamp submitTime;
+		private final long timeUsed;
+		private final int score;
+		private final String review;
+		private final int rating;
+		
+		//create a new quizevent
+		public QuizEvent(String quizID, String username, Timestamp submitTime, long timeUsed, int score, 
+				String review, int rating) {
+			super();
+			this.quizID = quizID;
+			this.username = username;
+			this.submitTime = submitTime;
+			this.timeUsed = timeUsed;
+			this.score = score;
+			this.review = review;
+			this.rating = rating;
+		}
+		//for getting quiz event list
+		public QuizEvent(String quizID, String username, Timestamp submitTime, long timeUsed, int score) {
+			super();
+			this.quizID = quizID;
+			this.username = username;
+			this.submitTime = submitTime;
+			this.timeUsed = timeUsed;
+			this.score = score;
+			this.review = null;
+			this.rating = -1;
+		}
+		//existing quizevent
+		public QuizEvent(String quizID, String username, Timestamp submitTime) {
+			long timeUsed = 0;
+			int score = 0;
+			String review = null;
+			int rating = 0;
+			
+			Connection con = DBConnection.getConnection();
+			try {
+				Statement stmt = con.createStatement();
+				ResultSet rs = stmt.executeQuery("SELECT * FROM quiz_history WHERE quizID = \"" + quizID + "\"" +
+				" and username = \"" + username + "\"" + " and submitTime = \"" + submitTime + "\"");
+				rs.next();
+				timeUsed = rs.getLong("timeUsed");
+				score = rs.getInt("score");
+				rs = stmt.executeQuery("SELECT * FROM quiz_rating WHERE quizID = \"" + quizID + "\" and username = \"" + 
+				username + "\"");
+				if(rs.isBeforeFirst()) {
+					review = rs.getString("review");
+					rating = rs.getInt("rating");
+				}else {
+					review = "";
+					rating = -1;					
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+			this.quizID = quizID;
+			this.username = username;
+			this.submitTime = submitTime;
+			this.timeUsed = timeUsed;
+			this.score = score;
+			this.review = review;
+			this.rating = rating;
+		}
+		
+		//save an event to quiz_history table. If the user rated or reviewed, also add to quiz_rating table
+		private void save() {
+			Connection con = DBConnection.getConnection();
+			try {
+				// save event to quiz_his table and quiz_rating
+				Statement stmt = con.createStatement();
+				String contentRow = "\"" + getquizID() + "\",\""
+						+ getUserName() + "\",\"" + getSubmitTime() + "\", "
+						+ getTimeUsed() + ", " + getScore();
+				stmt.executeUpdate("INSERT INTO quiz_history VALUES (" + contentRow + ")");
+				/*if (rating != -1 || review != "") {
+					String rateContentRow = "\"" + getquizID() + "\",\""
+							+ getUserName() + "\"," + getRating() + ",\"" + getReview() + "\"";
+					stmt.executeUpdate("INSERT INTO quiz_rating VALUES (" + rateContentRow + ")");
+				}*/
+				// update user achievement
+				
+				ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM quiz_history WHERE quizID = \"" + quizID + 
+						"\" and username = \"" + username + "\"");
+				rs.next();
+				int userTakenTimes = Integer.parseInt(rs.getString("COUNT(*)"));
+				if(userTakenTimes == 10) {
+					Helper.addAchievement(username, "Quiz Machine");
+				}
+				rs = stmt.executeQuery("SELECT username FROM quiz_history WHERE quizID = \"" + quizID + 
+						"\" ORDER BY score DESC");
+				rs.next();
+				String highestUser = rs.getString("username");
+				if(highestUser.equals(username)) {
+					Helper.addAchievement(username, "I am the Greatest");
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		public final int getRating() {
+			return rating;
+		}
+		
+		public final String getReview() {
+			return review;
+		}
+		
+		public final String getquizID() {
+			return quizID;
+		}
+		
+		public final String getUserName() {
+			return username;
+		}
+		
+		public final long getTimeUsed() {
+			return timeUsed;
+		}
+		
+		public String getTimeUsedFormat() {
+			return String.format(
+					"%d:%d",
+					TimeUnit.MILLISECONDS.toMinutes(timeUsed),
+					TimeUnit.MILLISECONDS.toSeconds(timeUsed)
+							- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS
+									.toMinutes(timeUsed)));
+
+		}
+
+		public final int getScore() {
+			return score;
+		}
+		
+		public final Timestamp getSubmitTime() {
+			return submitTime;
+		}
+	}
+	
+	//End of QuizEvent class
+	
+	private final String quizID;
+	private final String quizName;
+	private final String creator;
+	private final Timestamp createTime;
+	private final int totalScore;
+	private String quizDescription;
+	private List<String> tag;
+	private boolean practiceMode;
+	private boolean isRandomOrder;
+	private boolean isSinglePage;
+	private boolean isCorrection; 
+	private List<Question> questionList;
+	private String category;
+	private float avgScore;
+	private int numTaken;
+	private int numRating;
+	private float avgRating;
+	
+	
+	// new quiz object. Id is generated by the system.
+	public MyQuiz(String quizName, String creator, String quizDescription,
+			List<String> tag, boolean practiceMode, boolean isRandomOrder,
+			boolean isSinglePage, boolean isCorrection,
+			List<Question> questionList, Timestamp createTime,
+			String category, int totalScore) {
+		super();
+		this.quizName = quizName;
+		this.creator = creator;
+		this.quizDescription = quizDescription;
+		this.tag = tag;
+		this.practiceMode = practiceMode;
+		this.isRandomOrder = isRandomOrder;
+		this.isSinglePage = isSinglePage;
+		this.isCorrection = isCorrection;
+		this.questionList = questionList;
+		this.createTime = createTime;
+		this.totalScore = totalScore;
+		this.category = category;
+		String quizID = generateId();
+		this.quizID = quizID;
+		this.avgScore = 0;
+		this.numTaken = 0;
+		this.numRating = 0;
+		this.avgRating = 0;
+	}
+	
+	public MyQuiz(String quizName) {
+		String quizID = "error";
+		String creator = "error";
+		int totalScore = 0;
+		String quizDescription = "error";
+		List<String> tag = new ArrayList<String>();
+		boolean practiceMode = false;
+		boolean isRandomOrder = false;
+		boolean isSinglePage = false;
+		boolean isCorrection = false;
+		List<Question> questionList = new ArrayList<Question>();
+		Timestamp createTime = new Timestamp(0);
+		String category = "NewCategory";
+		int numTaken = 0;
+		int numRating = 0;
+		float avgRating = 0;
+		float avgScore = 0;
+
+		Connection con = DBConnection.getConnection();
+		
+		try {
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("SELECT * FROM quiz_summary WHERE quizName = \""
+							+ quizName + "\"");
+			rs.next();
+			quizID = rs.getString("quizID");
+			numTaken = rs.getInt("numTaken");
+			numRating = rs.getInt("numRating");
+			avgRating = rs.getFloat("avgRating");
+			avgScore = rs.getFloat("avgScore");
+			totalScore = rs.getInt("totalScore");
+			creator = rs.getString("creator");
+			quizDescription = rs.getString("quizDescription");
+			practiceMode = rs.getBoolean("practiceMode");
+			isRandomOrder = rs.getBoolean("isRandomOrder");
+			isSinglePage = rs.getBoolean("isSinglePage");
+			isCorrection = rs.getBoolean("isCorrection");
+			String tagString = rs.getString("tag");
+			tag = Helper.parseTags(tagString);
+			createTime = rs.getTimestamp("createTime");
+			category = rs.getString("category");
+			totalScore = rs.getInt("totalScore");
+			String questionType = rs.getString("questionType");
+			String questionId = rs.getString("questionId");
+			List<String> questionTypeList = new ArrayList<String>();
+			List<String> questionIdList = new ArrayList<String>();
+			questionTypeList = Helper.parseQuestionType(questionType);
+			questionIdList = Helper.parseQuestionId(questionId);
+			for (int i = 0; i < (questionTypeList).size(); i++) {
+				Question question = QuestionHelper.getQuestion(questionTypeList.get(i), questionIdList.get(i));
+				questionList.add(question);
+			}
+			}catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+			this.quizName = quizName;
+			this.quizID = quizID;
+			this.creator = creator;
+			this.totalScore = totalScore;
+			this.quizDescription = quizDescription;
+			this.tag = tag;
+			this.practiceMode = practiceMode;
+			this.isRandomOrder = isRandomOrder;
+			this.isSinglePage = isSinglePage;
+			this.isCorrection = isCorrection;
+			this.questionList = questionList;
+			this.createTime = createTime;
+			this.category = category;
+			this.avgScore = avgScore;
+			this.numTaken = numTaken;
+			this.numRating = numRating;
+			this.avgRating = avgRating;
+			
+	}
+	
+	public MyQuiz(String quizID, int sign) {
+		String quizName = "error";
+		String creator = "error";
+		int totalScore = 0;
+		String quizDescription = "error";
+		List<String> tag = new ArrayList<String>();
+		boolean practiceMode = false;
+		boolean isRandomOrder = false;
+		boolean isSinglePage = false;
+		boolean isCorrection = false;
+		List<Question> questionList = new ArrayList<Question>();
+		Timestamp createTime = new Timestamp(0);
+		String category = "NewCategory";
+		int numTaken = 0;
+		int numRating = 0;
+		float avgRating = 0;
+		float avgScore = 0;
+
+		Connection con = DBConnection.getConnection();
+		
+		try {
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("SELECT * FROM quiz_summary WHERE quizID = \""
+							+ quizID + "\"");
+			rs.next();
+			quizName = rs.getString("quizName");
+			numTaken = rs.getInt("numTaken");
+			numRating = rs.getInt("numRating");
+			avgRating = rs.getFloat("avgRating");
+			avgScore = rs.getFloat("avgScore");
+			totalScore = rs.getInt("totalScore");
+			creator = rs.getString("creator");
+			quizDescription = rs.getString("quizDescription");
+			practiceMode = rs.getBoolean("practiceMode");
+			isRandomOrder = rs.getBoolean("isRandomOrder");
+			isSinglePage = rs.getBoolean("isSinglePage");
+			isCorrection = rs.getBoolean("isCorrection");
+			String tagString = rs.getString("tag");
+			tag = Helper.parseTags(tagString);
+			createTime = rs.getTimestamp("createTime");
+			category = rs.getString("category");
+			totalScore = rs.getInt("totalScore");
+			String questionType = rs.getString("questionType");
+			String questionId = rs.getString("questionId");
+			List<String> questionTypeList = new ArrayList<String>();
+			List<String> questionIdList = new ArrayList<String>();
+			questionTypeList = Helper.parseQuestionType(questionType);
+			questionIdList = Helper.parseQuestionId(questionId);
+			for (int i = 0; i < (questionTypeList).size(); i++) {
+				Question question = QuestionHelper.getQuestion(questionTypeList.get(i), questionIdList.get(i));
+				questionList.add(question);
+			}
+			}catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+			this.quizName = quizName;
+			this.quizID = quizID;
+			this.creator = creator;
+			this.totalScore = totalScore;
+			this.quizDescription = quizDescription;
+			this.tag = tag;
+			this.practiceMode = practiceMode;
+			this.isRandomOrder = isRandomOrder;
+			this.isSinglePage = isSinglePage;
+			this.isCorrection = isCorrection;
+			this.questionList = questionList;
+			this.createTime = createTime;
+			this.category = category;
+			this.avgScore = avgScore;
+			this.numTaken = numTaken;
+			this.numRating = numRating;
+			this.avgRating = avgRating;
+			
+	}
+	
+	//Can't change quiz name and total score once created a quiz
+	public void edit(String quizDescription, List<String> tag,
+			boolean practiceMode, boolean isRandomOrder, boolean isSinglePage,
+			boolean isCorrection, List<Question> questionList,
+			String category) {
+		this.quizDescription = quizDescription;
+		this.tag = tag;
+		this.practiceMode = practiceMode;
+		this.isRandomOrder = isRandomOrder;
+		this.isSinglePage = isSinglePage;
+		this.isCorrection = isCorrection;
+		this.questionList = questionList;
+		this.category = category;
+	}
+	
+	//save a quiz to quiz_summary table
+	public void save() {
+		Connection con = DBConnection.getConnection();
+		try{
+			Statement stmt = con.createStatement();
+			//Helper.generateQuestionType
+			/*String questionType = "";
+			String questionId = "";
+			Question qfirst = questionList.get(0);
+			questionType = questionType + "\"" + qfirst.getQuestionType() + "\"";
+			for (int i = 1; i < questionList.size();i++) {
+				Question q = questionList.get(i);
+				questionType = questionType + ",\"" + q.getQuestionType() + "\"";
+			}
+			questionId = questionId + "\"" + qfirst.getQuestionId() + "\"";
+			for (int i = 1; i < questionList.size();i++) {
+				Question q = questionList.get(i);
+				questionId = questionId + ",\"" + q.getQuestionId() + "\"";
+			}*/
+			String quizRow = "\"" + quizID +"\",\"" + quizName + "\",\"" + creator
+					+ "\",\"" + quizDescription + "\",\"" + category + "\",\"" + 
+					Helper.generateTags(tag) + "\"," + practiceMode +
+					", " + isRandomOrder + ", " + isSinglePage + ", " +
+					isCorrection + ", \"" + createTime + "\",\"" + Helper.generateQuestionType(questionList) +
+					"\",\"" + Helper.generateQuestionId(questionList) + "\", " + numTaken + ", " + numRating + 
+					", " + avgRating + ", " + totalScore + ", " + avgScore;
+			System.out.println(quizRow);
+			stmt.executeUpdate("INSERT INTO quiz_summary VALUES("
+					+ quizRow + ")");
+						
+		} catch(SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void updateDatabase() {
+		Connection con = DBConnection.getConnection();
+		try {
+			Statement stmt = con.createStatement();
+			/*String quizRow = "\"" + quizID +"\",\"" + quizName + "\",\"" + creator
+					+ "\",\"" + quizDescription + "\",\"" + category + "\",\"" + 
+					Helper.generateTags(tag) + "\",\"" + practiceMode +
+					"\",\"" + isRandomOrder + "\",\"" + isSinglePage + "\",\"" +
+					isCorrection + "\",\"" + createTime + "\",\"" + Helper.generateQuestionType(questionList) +
+					"\",\"" + Helper.generateQuestionId(questionList) + ", " + numTaken + ", " + numRating + 
+					", " + avgRating + ", " + totalScore + ", " + avgScore;
+			stmt.executeUpdate("DELETE FROM quiz_summary WHERE quizName = \""
+					+ quizName + "\"");
+			stmt.executeUpdate("INSERT INTO quiz_summary VALUES("
+					+ quizRow + ")");	*/
+			stmt.executeUpdate("UPDATE quiz_summary SET quizID = \"" + quizID + "\", quizName = \"" + 
+					quizName + "\", creator = \"" + creator + "\", quizDescription = \"" + quizDescription + "\", category = \"" +
+					category + "\", tag =\"" + Helper.generateTags(tag) + "\", practiceMode = " + practiceMode + 
+					", isRandomOrder = " + isRandomOrder + ", isSinglePage = " + isSinglePage + 
+					", isCorrection = " + isCorrection + ", createTime = \"" + createTime + "\", questionType = \"" + 
+					Helper.generateQuestionType(questionList) + "\", questionID = \"" + Helper.generateQuestionId(questionList) + 
+					"\", numTaken = " + numTaken + ", numRating = " + numRating + ", avgRating = " + avgRating +
+					", totalScore = " + totalScore + ", avgScore = " + avgScore + " WHERE quizName = \""
+					+ quizName + "\"");
+		} catch(SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void makeRandom() {
+		Connection con = DBConnection.getConnection();
+		try {
+			Statement stmt = con.createStatement();
+			Collections.shuffle(questionList);
+			stmt.executeUpdate("UPDATE quiz_summary SET questionId = \"" + 
+			Helper.generateQuestionId(questionList) + "\" WHERE quizName= \"" +
+					quizName + "\"");
+			stmt.executeUpdate("UPDATE quiz_summary SET questionType = \"" + 
+					Helper.generateQuestionType(questionList) + "\" WHERE quizName= \"" +
+							quizName + "\"");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	public String getSummaryUrl() {
+		return "quiz_summary.jsp?quizID=" + quizID;
+	}
+	
+	public String getQuizStartPage() {
+		return "QuestionProcessServlet?quizID=" + quizID;
+	}
+	
+	public String getQuizEditPage() {
+		return "quiz_edit.jsp?quizName=" + quizName;
+	}
+
+	public Timestamp getCreateTime() {
+		return createTime;
+	}
+	
+
+	public String getQuizDescription() {
+		return quizDescription;
+	}
+
+	public List<String> getTag() {
+		return tag;
+	}
+	
+	public boolean isPractice() {
+		return practiceMode;
+	}
+
+	public boolean isRandomOrder() {
+		return isRandomOrder;
+	}
+
+	public boolean isSinglePage() {
+		return isSinglePage;
+	}
+
+	public boolean isCorrection() {
+		return isCorrection;
+	}
+	
+	@Override
+	public String getCreator() {
+		return creator;
+	}
+	
+	@Override
+	public int getTotalScore() {
+		return totalScore;
+	}
+	
+	@Override
+	public int getTakenTimes() {
+		return numTaken;
+	}
+	
+	@Override
+	public int getNumRating() {
+		return numRating;
+	}
+	
+	@Override
+	public float getAvgRating() {
+		return avgRating;
+	}
+	
+	@Override
+	public float getAvgScore() {
+		return avgScore;
+	}
+	@Override
+	public String getQuizName() {
+		return quizName;
+	}
+	
+	public List<Question> getQuestionList() {
+		return questionList;
+	}
+	
+	public String getCategory() {
+		return category;
+	}
+	
+	public String getId() {
+		return quizID;
+	}
+
+	/*@Override
+	public String getTimeUsed() {
+		if (containsQuizEvent(quizID)) {
+			QuizEvent event = new QuizEvent(quizID);
+			long timeElapsed = event.getTimeElapsed();
+			return String.format(
+					"%d:%d",
+					TimeUnit.MILLISECONDS.toMinutes(timeElapsed),
+					TimeUnit.MILLISECONDS.toSeconds(timeElapsed)
+							- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS
+									.toMinutes(timeElapsed)));
+		} else
+			return null;
+	}*/
+	
+	public List<QuizEvent> getHighScoreEventsLastDay(int num) {
+		Connection con = DBConnection.getConnection();
+		ResultSet rs = null;
+		try {
+			Statement stmt = con.createStatement();
+			rs = stmt
+					.executeQuery("SELECT * FROM quiz_history WHERE quizID = \"" +
+			quizID + "\" and submitTime >= cast((now() - interval 1 day) as date) " 
+							+ "ORDER BY score DESC, timeUsed ASC "
+							+ "LIMIT 0," + num);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return getQuizEventList(rs);
+	}
+	
+	public List<QuizEvent> getRecentTakenEvents(int num) {
+
+		Connection con = DBConnection.getConnection();
+		ResultSet rs = null;
+		try {
+			Statement stmt = con.createStatement();
+			rs = stmt.executeQuery("SELECT * FROM quiz_history WHERE quizID = \"" +
+			quizID +"\" ORDER BY submitTime DESC " + "LIMIT 0," + num);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return getQuizEventList(rs);
+	}
+	
+	private List<QuizEvent> getAllEvents() {
+		Connection con = DBConnection.getConnection();
+		ResultSet rs = null;
+		try {
+			Statement stmt = con.createStatement();
+			rs = stmt.executeQuery("SELECT * FROM quiz_history WHERE quizID = \"" +
+					quizID +"\" ORDER BY submitTime DESC ");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return getQuizEventList(rs);
+	}
+	
+	public List<QuizEvent> getHighScoreEvents(int num) {
+		Connection con = DBConnection.getConnection();
+		ResultSet rs = null;
+		try {
+			Statement stmt = con.createStatement();
+			rs = stmt.executeQuery("SELECT * FROM quiz_history WHERE quizID = \"" +
+			quizID + "\" ORDER BY score DESC, timeUsed ASC "
+					+ "LIMIT 0," + num);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return getQuizEventList(rs);
+	}
+	
+	private List<QuizEvent> getQuizEventList(ResultSet rs) {
+		List<QuizEvent> events = new ArrayList<MyQuiz.QuizEvent>();
+		try {
+			while (rs.next()) {
+				String quizID = rs.getString("quizID");
+				String username = rs.getString("username");
+				Timestamp submitTime = rs.getTimestamp("submitTime");
+				long timeUsed = rs.getLong("timeUsed");
+				int score = rs.getInt("score");
+				QuizEvent event = new QuizEvent(quizID, username, submitTime, timeUsed, score);
+				events.add(event);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return events;
+	}
+	
+/*	public int getTakenTimes() {
+		int num = 0;
+		Connection con = DBConnection.getConnection();
+		try {
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM quiz_history WHERE quizID = \"" +
+			quizID + "\"");
+			// get the number of rows
+			rs.last();
+			num = rs.getRow();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return num;
+	}
+	*/
+	private String generateId() {
+		// first hash
+		String quizID = Helper.getMD5ForTime();
+
+		Connection con = DBConnection.getConnection();
+		try {
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM quiz_summary WHERE quizID = \"" + quizID + "\"");
+			// hash until the id is not used already
+			while (rs.isBeforeFirst()) {
+				quizID = Helper.getMD5ForTime();
+				rs = stmt.executeQuery("SELECT * FROM quiz_summary WHERE quizID = \"" + quizID + "\"");
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return quizID;
+	}
+	
+	//pass in rating = -1 and review = "" if they are not available yet
+	public void saveQuizEvent(String quizID, String username, long timeUsed, int score) {
+		Timestamp submitTime = new Timestamp(new java.util.Date().getTime());
+		QuizEvent event = new QuizEvent(quizID, username, submitTime,
+				timeUsed, score);
+		event.save();
+		updateAddedCols(quizID, score);
+	}
+	
+	private void updateAddedCols(String quizID, int score) {
+		Connection con = DBConnection.getConnection();
+		try {
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM quiz_summary WHERE quizID =\"" + quizID + "\"");
+			rs.next();
+			int prevnumTaken = rs.getInt("numTaken");
+			float prevavgScore = rs.getFloat("avgScore");
+			/*int prevnumRating = rs.getInt("numRating");
+			float prevavgRating = rs.getFloat("avgRating");
+			if(rating != -1) {
+				prevavgRating = (prevnumRating*prevavgRating + rating)/(prevnumRating + 1);
+				prevnumRating += 1;
+			}	*/		
+			prevavgScore = (prevnumTaken*prevavgScore + score)/(prevnumTaken + 1);			
+			prevnumTaken += 1;
+			stmt.executeUpdate("UPDATE quiz_summary SET numTaken = " + prevnumTaken + ", avgScore = " + 
+			prevavgScore + " WHERE quizID = \"" + quizID + "\"");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void updateRatingReview(String quizID, String username, int rating, String review) {
+		Connection con = DBConnection.getConnection();
+		try {
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM quiz_rating WHERE quizID = \"" +
+					quizID +"\" and username = \"" + username + "\"");
+			if(rs.isBeforeFirst()){
+				if(rating != -1) {
+					stmt.executeQuery("UPDATE quiz_rating SET rating = " + rating + 
+							" , review = \"" + review + "\" WHERE quizID = \"" +
+							quizID +"\" and username = \"" + username + "\"");
+					ResultSet rsfirst = stmt.executeQuery("SELECT * FROM quiz_summary WHERE quizID =\"" + quizID + "\"");
+					rsfirst.next();
+					int prevnumRating = rsfirst.getInt("numRating");
+					float prevavgRating = rsfirst.getFloat("avgRating");
+					prevavgRating = (prevnumRating*prevavgRating + rating)/(prevnumRating + 1);
+					prevnumRating += 1;		
+					stmt.executeUpdate("UPDATE quiz_summary SET numRating = " + prevnumRating + ", avgRating = " + 
+					prevavgRating + " WHERE quizID = \"" + quizID + "\"");
+				}else{
+					stmt.executeQuery("UPDATE quiz_rating SET review = \"" + review + "\" WHERE quizID = \"" +
+							quizID +"\" and username = \"" + username + "\"");
+				}
+			} else{
+				if(rating != -1) {
+					String rateContentRow = "\"" + quizID + "\",\""
+							+ username + "\"," + rating + ",\"" + review + "\"";
+					stmt.executeUpdate("INSERT INTO quiz_rating VALUES (" + rateContentRow + ")");
+					ResultSet rssec = stmt.executeQuery("SELECT * FROM quiz_summary WHERE quizID =\"" + quizID + "\"");
+					rssec.next();
+					int prevnumRating = rssec.getInt("numRating");
+					float prevavgRating = rssec.getFloat("avgRating");
+					prevavgRating = (prevnumRating*prevavgRating + rating)/(prevnumRating + 1);
+					prevnumRating += 1;		
+					stmt.executeUpdate("UPDATE quiz_summary SET numRating = " + prevnumRating + ", avgRating = " + 
+					prevavgRating + " WHERE quizID = \"" + quizID + "\"");
+				}else{
+					String rateContentRow = "\"" + quizID + "\",\""
+							+ username + "\"," + rating + ",\"" + review + "\"";
+					stmt.executeUpdate("INSERT INTO quiz_rating VALUES (" + rateContentRow + ")");
+
+				}
+			}
+				
+		}catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	public void clearQuizEvents() {
+		Connection con = DBConnection.getConnection();
+		try {
+			Statement stmt = con.createStatement();
+			stmt.executeUpdate("DELETE FROM quiz_history WHERE quizID =\"" + quizID + "\"");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public int getBestScore() {
+		List<QuizEvent> list = getAllEvents();
+		int bestScore = 0;
+		for (int i = 0; i < list.size(); i++) {
+			int curScore = list.get(i).getScore();
+			if (bestScore < curScore)
+				bestScore = curScore;
+		}
+		assert bestScore <= getTotalScore();
+		return bestScore;
+	}
+	
+	public int getLowestScore() {
+		if (getTakenTimes() > 0) {
+		List<QuizEvent> list = getAllEvents();
+			int LowScore = getTotalScore();
+		for (int i = 0; i < list.size(); i++) {
+			int curScore = list.get(i).getScore();
+			if (LowScore > curScore)
+				LowScore = curScore;
+		}
+		assert LowScore <= getTotalScore();
+		return LowScore;
+		} else {
+			return 0;
+		}
+	}
+	
+	public boolean containsQuizEvent(String quizID, String username) {
+		Connection con = DBConnection.getConnection();
+		try {
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM quiz_history WHERE quizID = \"" + 
+			quizID + "\" and username = \"" + username);
+			if (rs.isBeforeFirst())
+				return true;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	//for user's score and time in quiz result page
+	public QuizEvent getUserLatestEvent(String quizName, String username) {
+		Connection con = DBConnection.getConnection();
+		try {
+			String quizID;
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM quiz_summary WHERE quizName = \"" + 
+					quizName + "\"");
+			if(rs.next()) {
+				quizID = rs.getString("quizID");
+				rs = stmt.executeQuery("SELECT * FROM quiz_history WHERE quizID = \"" + 
+						quizID + "\" and username = \"" + username + "\" ORDER BY submitTime DESC LIMIT 1");
+				if(rs.next()) {
+					Timestamp submit = rs.getTimestamp("submitTime");
+					QuizEvent q = new QuizEvent(quizID, username, submit);
+					return q;
+				}
+			}
+		}catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	//for your performance in quiz result page
+	public List<QuizEvent> getUserRecentEvents(String userName, int num) {
+		Connection con = DBConnection.getConnection();
+		ResultSet rs = null;
+		try {
+			Statement stmt = con.createStatement();
+			rs = stmt.executeQuery("SELECT * FROM quiz_history WHERE quizID = \"" +
+					quizID +"\" and username = \"" + userName + "\" ORDER BY submitTime DESC " 
+					+ "LIMIT 0," + num);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return getQuizEventList(rs);
+	}
+	
+	public List<QuizEvent> getUserRecentTimeEvents(String userName, int num) {
+		Connection con = DBConnection.getConnection();
+		ResultSet rs = null;
+		try {
+			Statement stmt = con.createStatement();
+			rs = stmt.executeQuery("SELECT * FROM quiz_history WHERE quizID = \"" +
+					quizID +"\" and username = \"" + userName + "\" ORDER BY timeUsed  " 
+					+ "LIMIT 0," + num);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return getQuizEventList(rs);
+	}
+	
+	public List<QuizEvent> getUserRecentScoreEvents(String userName, int num) {
+		Connection con = DBConnection.getConnection();
+		ResultSet rs = null;
+		try {
+			Statement stmt = con.createStatement();
+			rs = stmt.executeQuery("SELECT * FROM quiz_history WHERE quizID = \"" +
+					quizID +"\" and username = \"" + userName + "\" ORDER BY score DESC " 
+					+ "LIMIT 0," + num);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return getQuizEventList(rs);
+	}
+	
+/*	public double getAvgScore() {
+		List<QuizEvent> list = getAllEvents();
+		double total = 0;
+		for (int i = 0; i < list.size(); i++) {
+			total += list.get(i).getScore();
+		}
+		double avg = total / getTakenTimes();
+		assert avg <= getTotalScore();
+		return avg;
+	}
+	*/
+}

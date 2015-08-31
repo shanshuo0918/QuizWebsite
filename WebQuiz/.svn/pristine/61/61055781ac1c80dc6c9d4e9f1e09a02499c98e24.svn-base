@@ -1,0 +1,64 @@
+package user;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import database.DBConnection;
+
+public class UserAccount {
+	private String username;
+	private String password;
+	private String createtime;
+	private String displayname;
+	private int privacy_quiz_take;
+	private int privacy_quiz_create;
+	private int privacy_quiz_score;
+	private int privacy_achieve;
+	private String achievement;
+	
+	public UserAccount(){
+		this.username = "NA";
+		this.password = "NA";
+		this.createtime = "NA";
+		this.displayname = "NA";
+		this.privacy_quiz_take = 0;
+		this.privacy_quiz_create = 0;
+		this.privacy_quiz_score = 0;
+		this.privacy_achieve = 0;
+		this.achievement = new String();
+	}
+	
+	public UserAccount(UserAccount user){
+		this.username = new String(user.username);
+		this.password = new String(user.password);
+		this.createtime = new String(user.createtime);
+		this.displayname = new String(user.displayname);
+		this.privacy_quiz_take = user.privacy_quiz_take;
+		this.privacy_quiz_create = user.privacy_quiz_create;
+		this.privacy_quiz_score = user.privacy_quiz_score;
+		this.privacy_achieve = user.privacy_achieve;
+		this.achievement = new String(user.achievement);
+	}
+	
+	public static String getDisplayName(String username){
+		String displayName = null;
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt;
+			stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("select displayname from "+database.TableNames.USERINFO_TB+
+											 " where username = \""+username+"\"");
+			if(rs != null){
+				rs.beforeFirst();
+				rs.next();
+				displayName = rs.getString(1);
+			}
+		}catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return displayName;
+	}
+}

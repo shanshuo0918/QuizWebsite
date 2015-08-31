@@ -1,0 +1,32 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ page import="quiz.*"%>
+<%@ page import="java.util.*" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<%
+	String quizName = "Test Quiz";
+	MyQuiz quiz = new MyQuiz(quizName);
+	List<Question> questionList = quiz.getQuestionList();
+%>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+HEADER HERE!<br>
+<%= quiz.getAvgScore() %> <br>
+<%= quiz.getQuizDescription() %> <br>
+<form action="CompleteQuizServlet" method="post">
+<%
+	for (int i = 0; i < questionList.size(); i++) {
+		out.println(questionList.get(i).doQuizPage()); 
+		out.println("<br>");
+	}
+	out.println(quiz.getId());
+%>
+<input name="quizID" type="hidden" value="<%= quiz.getId() %>">
+<input type = "submit" value = "Submit Answer">
+</form>
+</body>
+</html>

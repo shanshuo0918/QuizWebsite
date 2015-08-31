@@ -1,0 +1,37 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h3> You are now Creating a new Quiz!</h3>
+Name:<input type="text" name="quizName"><br>
+Description:<textArea name="quizDescription" row="10" cols="60" ></textarea><br>
+Tag:<input type="text" name="tag"><br>
+Category:<input type="text" name="category"><br>
+<input type="checkbox" name="isPracticeMode"> Allow Practice Mode
+<input type="checkbox" name="isRandomOrder"> Random Order<br>
+<input type="checkbox" name="isSinglePage"> All Question in Single Page
+<input type="checkbox" name="isCorrection"> Immediate Correction<br>
+
+
+Add New Question:<br>
+<form action="NewQuestionServlet" method="get">
+Question Type:
+<select name="questionType" >
+  <option value ="QR">Question Response</option>
+  <option value ="FIB">Fill In Blank</option>
+  <option value="MC">Multiple Choice</option>
+  <option value="PR">Picture Response</option>
+  <option value ="MA">Multiple Answer</option>
+  <option value="MCMA">Multiple Choice Multiple Answer</option>
+  <option value="MATCH">Matching</option>
+</select>
+<input type="submit" value="Add New Question">
+</form>
+
+</body>
+</html>

@@ -1,0 +1,14 @@
+127.0.0.1 - - [07/Mar/2015:22:16:04 -0800] "GET / HTTP/1.1" 404 951
+0:0:0:0:0:0:0:1 - - [07/Mar/2015:22:16:06 -0800] "GET /WebQuiz/SelectQuestionType.jsp HTTP/1.1" 200 842
+0:0:0:0:0:0:0:1 - - [07/Mar/2015:22:16:11 -0800] "GET /WebQuiz/SelectQuestionType.jsp?questionType=QR HTTP/1.1" 200 842
+0:0:0:0:0:0:0:1 - - [07/Mar/2015:22:16:13 -0800] "GET /WebQuiz/SelectQuestionType.jsp?questionType=QR HTTP/1.1" 200 842
+127.0.0.1 - - [07/Mar/2015:22:17:45 -0800] "GET / HTTP/1.1" 404 951
+0:0:0:0:0:0:0:1 - - [07/Mar/2015:22:17:47 -0800] "GET /WebQuiz/SelectQuestionType.jsp HTTP/1.1" 200 867
+0:0:0:0:0:0:0:1 - - [07/Mar/2015:22:17:49 -0800] "GET /WebQuiz/SelectQuestionType.jsp?questionType=QR HTTP/1.1" 200 867
+0:0:0:0:0:0:0:1 - - [07/Mar/2015:22:18:17 -0800] "GET /WebQuiz/SelectQuestionType.jsp HTTP/1.1" 200 842
+0:0:0:0:0:0:0:1 - - [07/Mar/2015:22:18:24 -0800] "GET /WebQuiz/SelectQuestionType.jsp?questionType=QR HTTP/1.1" 200 842
+127.0.0.1 - - [07/Mar/2015:22:19:42 -0800] "GET / HTTP/1.1" 404 951
+0:0:0:0:0:0:0:1 - - [07/Mar/2015:22:19:43 -0800] "GET /WebQuiz/SelectQuestionType.jsp HTTP/1.1" 200 841
+0:0:0:0:0:0:0:1 - - [07/Mar/2015:22:19:45 -0800] "GET /WebQuiz/SelectQuestionType.jsp?questionType=QR HTTP/1.1" 200 841
+0:0:0:0:0:0:0:1 - - [07/Mar/2015:22:20:33 -0800] "GET /WebQuiz/SelectQuestionType.jsp HTTP/1.1" 200 841
+0:0:0:0:0:0:0:1 - - [07/Mar/2015:22:20:37 -0800] "GET /WebQuiz/SelectQuestionType.jsp?questionType=QR HTTP/1.1" 200 841

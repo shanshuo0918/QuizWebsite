@@ -1,0 +1,42 @@
+package quiz;
+
+import java.util.ArrayList;
+
+public class QuestionResponse extends Question {
+
+	public QuestionResponse(String questionType, String questionID) {
+		super(questionType, questionID);
+	}
+	
+	public QuestionResponse(String quizID, int timeLimit, String question, String answer, int score) {
+		super("QR", quizID, timeLimit, question, answer, score);
+	}
+	
+	@Override
+	public String doQuizPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("This is a Question-Response question, please input your answer in the text box!");
+		page.append("<h4>Question: " + question + "</h4>");
+		page.append("Your Answer: <input type=\"text\" name=\"answer_" + questionID + "\" required/><br>");
+		return page.toString();
+	}
+	
+	@Override
+	public String editQuestionPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<form action=\"SaveQuestionServlet\" method=\"post\">");
+		page.append("<h3>You are creating a Question-Response question!</h3>\n");
+		page.append("Question (Please type your question in the textAera below): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"10\" cols=\"60\" required></textarea><br>");
+		page.append("Anwser (If you have mutiple possible anwsers, please put them in different line): <br>");
+		page.append("<textarea name=\"answer\" rows=\"5\" cols=\"60\" required></textarea><br>");
+		page.append("Score (How many points for the question): <input type=\"text\" name=\"score\" required/><br>");
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): <input type=\"text\" name=\"time\"/><br>");
+		page.append("<input type=\"hidden\" name=\"questionType\" value=\"QR\"></input><br>");
+		page.append("<input type=\"submit\" value=\"Add this question\">");
+		page.append("</form>");
+		return page.toString();
+	}
+	
+	
+}

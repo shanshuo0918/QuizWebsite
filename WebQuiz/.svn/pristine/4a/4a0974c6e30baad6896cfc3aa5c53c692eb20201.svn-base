@@ -1,0 +1,40 @@
+package quiz;
+
+public class FillInBlank extends Question {
+	public FillInBlank(String questionType, String questionID) {
+		super(questionType, questionID);
+	}
+	
+	public FillInBlank(String quizID, int timeLimit,
+			String question, String answer, int score) {
+		super("FIB", quizID, timeLimit, question, answer, score);
+	}
+	
+	@Override
+	public String doQuizPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<h4>Question: " + getFirstPartQuestion() + "<input type=\"text\" name=\"answer\" required/>" 
+				+ getSecondPartQuestion() + "</h4>");
+		
+		return page.toString();
+	}
+	
+	private String getFirstPartQuestion() {
+		for (int i = 0; i < question.length(); i ++) {
+			if (question.charAt(i) == '|') {
+				return question.substring(0, i);
+			}
+		}
+		return "";
+	}
+	
+	private String getSecondPartQuestion() {
+		for (int i = 0; i < question.length(); i ++) {
+			if (question.charAt(i) == '|') {
+				return question.substring(i + 1);
+			}
+		}
+		return "";
+	}
+	
+}

@@ -1,0 +1,222 @@
+package quiz;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
+import database.DBConnection;
+
+public class Matching extends Question {
+	protected final int numOfOptions;
+	protected final String choices;
+	
+	public Matching(String questionType, String questionID) {
+		super(questionType, questionID);
+		String query = "SELECT * FROM " + questionTypeTable + " WHERE questionID = \"" + questionID + "\"";
+		int tempNumOfOptions = 0;
+		String tempChoices = "";
+		
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			rs.next();
+			tempNumOfOptions = rs.getInt(7);
+			tempChoices = rs.getString(8);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		this.choices = tempChoices;
+		this.numOfOptions = tempNumOfOptions;
+	}
+	
+	public Matching(String quizID, int timeLimit,
+			String question, String answer, int score, int numOfOptions, String choices) {
+		super("MATCH" , quizID, timeLimit, question, answer, score);
+		this.numOfOptions = numOfOptions;
+		this.choices = choices;
+	}
+	
+	@Override
+	public String getUserAnswer(HttpServletRequest request) {
+		List<String> userAnswer = new ArrayList<String>();
+		for (int i = 1; i <= numOfOptions; i++) {
+			if (request.getParameter(request.getParameter("L" + i)) != null) {
+				userAnswer.add(request.getParameter(request.getParameter("L" + i)));
+			} else {
+				userAnswer.add(" ");
+			}
+		}
+		
+
+		String result = "";
+		for (int i = 0; i < userAnswer.size() - 1; i++) {
+			result += userAnswer.get(i);
+			result += "|";
+		}
+		result += userAnswer.get(userAnswer.size() - 1);
+		return result;
+	}
+	
+	public int getScore(String userAnswer) {
+		List<String> userAnswers = getArrayList(userAnswer);
+		List<String> answers = getAnswerList();
+		int count = 0;
+		for (int i = 0; i < answers.size(); i ++) {
+			if (answers.get(i).equalsIgnoreCase(userAnswers.get(i))) {
+				count ++;
+			}
+		}
+		return count * score;
+	}
+	
+	@Override
+	public int getMaxScore() {
+		return score * numOfOptions;
+	}
+	
+	@Override
+	public void addQuestion() {
+		String query = "INSERT INTO " + questionTypeTable + " VALUES(\"" + questionID + "\", \"" + quizID +
+				"\", \"" + timeLimit + "\", \"" + question + "\", \"" + answer + "\", \"" + score + 
+				"\", " + numOfOptions + ", \"" + choices + "\");";
+		System.out.println(query);
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			stmt.executeUpdate(query);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	public String doQuizPage() {
+		StringBuilder page = new StringBuilder();
+		ArrayList<String> answerList = getAnswerList();
+		ArrayList<String> choiceList = getChoiceList();
+		Collections.shuffle(answerList);
+		page.append("This is a Matching question, please match each statement on the left to the options on the right!");
+		page.append("<h4>Question: " + question + "</h4>");
+		
+		page.append("<div class=\"match-box\" id=\"Match-box\">");
+		page.append("<div class=\"match-left\">");
+		
+		for(int i = 1; i <= choiceList.size(); i ++) {
+			page.append("<li class=\"match-op left-op l" + i + "\" id = \"L" + i + "\">" + choiceList.get(i - 1) + "</li><br>");
+		}
+		page.append("</div>");
+		page.append("<canvas id=\"myCanvas\" style=\"border:0px solid #d3d3d3;\" class = \"myCanvasClass\"></canvas>");
+		
+		page.append("<div class=\"match-right\">");
+		
+		for(int i = 1; i <= answerList.size(); i ++) {
+			page.append("<li class=\"match-op right-op r" + i + "\" id = \"R" + i + "\">" + answerList.get(i - 1) + "</li><br>");
+		}
+		page.append("</div>");
+		page.append("</div>");
+		
+		page.append("<button type=\"button\" class = \"login-submit\" id = \"clear-but\"> Clear Match </button>");
+
+		page.append("<div class=\"match-inv\">");
+		//page.
+		for(int i = 1; i <= answerList.size(); i ++) {
+			page.append("L" + i + ": <input type=\"text\" name=\"L" + i + "\" id = \"L" + i + "inv\" class = \"inv\"> <br>");
+		}
+		for(int i = 1; i <= answerList.size(); i ++) {
+			page.append("R" + i + ": <input type=\"text\" id = \"R" + i + "inv\" class = \"inv\"> <br>");
+		}
+		
+		for(int i = 1; i <= answerList.size(); i ++) {
+			page.append("<input type=\"hidden\" name=\"R" + i + "\" value=\"" + answerList.get(i - 1) + "\">");
+		}
+		page.append("</div>");
+		
+		return page.toString();
+	}
+	
+	@Override
+	public void updateQuestion(HttpServletRequest request) {
+		String question = request.getParameter("questionDescription");
+		String answer = QuestionHelper.generateAnswers(request);
+		String options = QuestionHelper.generateOptions(request);
+		int timeLimit = 0;
+		if (request.getParameter("time") != "") {
+			timeLimit = Integer.parseInt(request.getParameter("time"));
+		}
+		int numOfOptions = QuestionHelper.countNumOfAns(answer);
+		
+		String query = "Update " + questionTypeTable + " SET question = \"" + question + "\", answer = \"" + answer +
+				"\", timeLimit = \"" + timeLimit + "\", numOfOptions = " + numOfOptions + ", choices = \"" + options +  
+				"\" WHERE questionID = \"" + questionID + "\";";
+		System.out.println(query);
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			stmt.executeUpdate(query);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	@Override
+	public String editQuestionPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<h3>You are creating a Multiple-Answer question!</h3>\n");
+		page.append("<textarea name=\"questionDescription\" rows=\"10\" cols=\"60\" required>" + question + "</textarea><br>");
+		page.append("Answer (If you have mutiple possible answers, please put them in different line): <br>");
+		
+		ArrayList<String> choiceList = getChoiceList();
+		ArrayList<String> answerList = getAnswerList();
+		for (int i = 1; i <= choiceList.size(); i++) {
+			page.append("<input type=\"text\" name=\"option" + i +"\" value=\"" + choiceList.get(i-1) +"\"/><input type=\"text\" name=\"answer" + i +"\" value=\"" + answerList.get(i-1) +"\"/><br>");
+		}
+		for (int i = choiceList.size()+1 ; i <= 5; i++) {
+			page.append("<input type=\"text\" name=\"option" + i +"\"/><input type=\"text\" name=\"answer" + i +"\"/><br>");
+		}
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): "
+				+ "<input type=\"text\" name=\"time\" value =\"" + timeLimit + "\"><br>");
+		return page.toString();
+	}
+	
+	protected ArrayList<String> getChoiceList() {
+		ArrayList<String> choiceList = new ArrayList<String>();
+		int start = 0;
+		int end = 0;
+		while (end < choices.length() - 1) {
+			if (choices.charAt(end) == '|') {
+				System.out.println(start);
+				System.out.println(end);
+				choiceList.add(choices.substring(start, end));
+				start = end + 1;
+			}
+			end ++;
+		}
+		choiceList.add(choices.substring(start));
+		return choiceList;
+	}
+	
+	protected ArrayList<String> getArrayList(String str) {
+		ArrayList<String> list = new ArrayList<String>();
+		int start = 0;
+		int end = 0;
+		while (end < str.length() - 1) {
+			if (str.charAt(end) == '|') {
+				list.add(str.substring(start, end));
+				start = end + 1;
+			}
+			end ++;
+		}
+		list.add(str.substring(start));
+		System.out.println(list.toString());
+		return list;
+	}
+	
+}

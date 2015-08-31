@@ -1,0 +1,25 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ page import="quiz.*"%>
+<%@ page import="java.util.*" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<%
+	String quizName = "Test Quiz";
+	MyQuiz quiz = new MyQuiz(quizName);
+	List<Question> questionList = quiz.getQuestionList();
+%>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+HEADER HERE!<br>
+<%= quiz.getAvgScore() %> <br>
+<%= quiz.getQuizDescription() %> <br>
+<%= questionList.size() %>
+<%
+		out.println(questionList.get(6).doQuizPage());
+%>
+</body>
+</html>

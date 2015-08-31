@@ -1,0 +1,71 @@
+package quiz;
+
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import util.Helper;
+
+/**
+ * Servlet implementation class FinishCreateQuizServlet
+ */
+@WebServlet("/FinishCreateQuizServlet")
+public class FinishCreateQuizServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+    /**
+     * @see HttpServlet#HttpServlet()
+     */
+    public FinishCreateQuizServlet() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		HttpSession session = request.getSession();
+		
+		String quizName = (String)session.getAttribute("quizName");
+		String creator = (String)session.getAttribute("creator");
+		String quizDescription = (String)session.getAttribute("quizDescription");
+		List<String>tag = (List<String>)session.getAttribute("tag");
+		String category = (String)session.getAttribute("category");
+		
+		Boolean practiceMode = (Boolean)session.getAttribute("practiceMode");
+		Boolean isRandomOrder = (Boolean)session.getAttribute("isRandomOrder");
+		Boolean isSinglePage = (Boolean)session.getAttribute("isSinglePage");
+		Boolean isCorrection = (Boolean)session.getAttribute("isCorrection");
+		List<Question> questionList = (List<Question>)session.getAttribute("questionList");
+		
+		Timestamp createTime = new Timestamp(new java.util.Date().getTime());
+		int totalScore = 0;
+		for (int i = 0; i < questionList.size(); i ++) {
+			totalScore += questionList.get(i).getMaxScore();
+		}
+		MyQuiz newQuiz = new MyQuiz(quizName, creator, quizDescription, tag, practiceMode, isRandomOrder,
+				isSinglePage, isCorrection, questionList, createTime, category, totalScore);
+		newQuiz.save();
+		
+		RequestDispatcher dispatcher = request.getRequestDispatcher("QuizSummaryPage.jsp?quizID=" + newQuiz.getId());
+		dispatcher.forward(request, response);
+	}
+
+}

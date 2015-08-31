@@ -1,0 +1,163 @@
+<%@ page import="admin.Announce" %>
+<%@ page import="admin.Admin.*" %>
+<%@ page import="user.UserAccount" %>
+<%@ page import="java.util.*" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+    
+<%! 
+public String quizHREF(String id, String name){
+	return "<a href=\"QuizSummaryPage.jsp?id=" + id + "\">" + name + "</a>";
+}
+%>
+
+<%
+String username = (String) session.getAttribute("username");
+String loginFailMsg = (String) session.getAttribute("loginFailMsg");
+ArrayList<Announce> announceList = admin.Announce.getRecentAnnounce(5);
+ArrayList<HomepageQuiz> recentQuiz = admin.Admin.getHomepageQuiz(username,5,0);
+ArrayList<HomepageQuiz> popularQuiz = admin.Admin.getHomepageQuiz(username,5,1);
+%>
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>Quiz</title>
+</head>
+<body>
+	<%
+	// divide into two views to accommodate css
+	if(username == null || username.equals("guest")){
+		out.print("<p>Please log in</p>");
+		out.print("<form action=\"LoginServlet\" method=\"post\">");
+		out.print("<p>Username: <input type=\"text\" name=\"username\" /></p>");
+		out.print("<p>Password: <input type=\"password\" name=\"password\" /><input type=\"submit\" value=\"login\"/></p>");
+		out.print("</form>");
+		out.print("<a href=\"signup.jsp\">Sign Up</a>");
+		if(loginFailMsg != null){
+			out.print(loginFailMsg);
+			session.removeAttribute("loginFailMsg");
+		}
+		// Announcement
+		out.println("<h1>Announcement</h1>");
+		if(announceList == null || announceList.size() == 0)
+			out.println("No announcement.");
+		else{
+			out.println("<ul>");
+			for(Announce a: announceList){
+				out.println("<li>"+a.content+", "+a.datetime+"</li>");
+			}
+			out.println("</ul>");
+		}
+		
+		// Recent Quiz
+		out.println("<h1>Recent Quizzes</h1>");
+		if(recentQuiz == null || recentQuiz.size() == 0)
+			out.println("No quizzes.");
+		else{
+			out.println("<ul>");
+			for(HomepageQuiz quiz: recentQuiz){
+				out.println("<li>"+quizHREF(quiz.quizID,quiz.quizName)+", "+quiz.createTime+"</li>");
+			}
+			out.println("</ul>");
+		}
+		
+		// Links
+		out.println("<h1>Links:</h1>");
+		out.println("<h2><a href=\"homepage.jsp\">Home</a></h2>");
+		out.println("<h2><a href=\"all-quizzes.jsp\">Quizzes</a></h2>");
+		
+	}else{
+		String displayName = (String) session.getAttribute("displayname");
+		if(displayName == null){
+			displayName = UserAccount.getDisplayName(username);
+			session.setAttribute("displayname", displayName);
+		}
+		out.println("Welcome "+displayName+"!");
+		out.println("<a href=\"LogoutServlet\">Log Out</a>");
+		out.println("<br>");
+		//Search bar
+		out.println("<form action=\"SearchServlet\" method=\"post\">");
+		out.println("Search <select name=\"searchtype\">");
+		out.println("<option value=\"friend\">Friend</option>");
+		out.println("<option value=\"quiz\">Quiz</option>");
+		out.println("</select>");
+		out.println("<input type=\"text\" name=\"searchkey\">");
+		out.println("<input type=\"submit\" value=\"search\">");
+		out.println("</form>");
+		// Announcement
+		out.println("<h1>Announcement</h1>");
+		if(announceList == null || announceList.size() == 0)
+			out.println("No announcement.");
+		else{
+			out.println("<ul>");
+			for(Announce a: announceList){
+				out.println("<li>"+a.content+", "+a.datetime+"</li>");
+			}
+			out.println("</ul>");
+		}
+		
+		// Recent Quiz
+		out.println("<h1>Recent Quizzes</h1>");
+		if(recentQuiz == null || recentQuiz.size() == 0)
+			out.println("No quizzes.");
+		else{
+			out.println("<ul>");
+			for(HomepageQuiz quiz: recentQuiz){
+				out.println("<li>"+quizHREF(quiz.quizID,quiz.quizName)+", "+quiz.createTime+"</li>");
+			}
+			out.println("</ul>");
+		}
+		
+		// Popular Quiz
+		out.println("<h1>Popular Quizzes</h1>");
+		if(popularQuiz == null || popularQuiz.size() == 0)
+			out.println("No quizzes.");
+		else{
+			out.println("<ul>");
+			for(HomepageQuiz quiz: popularQuiz){
+				out.println("<li>"+quizHREF(quiz.quizID,quiz.quizName)+", rating: "+quiz.rating+"</li>");
+			}
+			out.println("</ul>");
+		}
+		
+		// User's recent activity
+		ArrayList<QuizHist> quizTaking = admin.Admin.getQuizTaking(username,5);
+		out.println("<h2>Recent Quiz Taking</h2>");
+		if(quizTaking == null || quizTaking.size() == 0)
+			out.println("Have not taken any quiz!");
+		else{
+			out.println("<ul>");
+			for(QuizHist quiz: quizTaking){
+				out.println("<li>"+quizHREF(quiz.quizID,quiz.quizName)+
+						        ", Date: "+quiz.submitTime+
+						        ", Score: "+quiz.score+
+						        ", Time Used: "+quiz.timeUsed+"</li>");
+			}
+			out.println("</ul>");
+		}
+		
+		out.println("<h2>Recent Quiz Creating</h2>");
+		ArrayList<HomepageQuiz> quizCreating = admin.Admin.getHomepageQuiz(username,5,2);
+		if(quizCreating == null || quizCreating.size() == 0)
+			out.println("Have not created any quiz!");
+		else{
+			out.println("<ul>");
+			for(HomepageQuiz quiz: quizCreating){
+				out.println("<li>"+quizHREF(quiz.quizID,quiz.quizName)+", "+quiz.createTime+"</li>");
+			}
+			out.println("</ul>");
+		}
+		
+		// Links
+		out.println("<h1>Links:</h1>");
+		out.println("<h2><a href=\"homepage.jsp\">Home</a></h2>");
+		out.println("<h2><a href=\"all-quizzes.jsp\">Quizzes</a></h2>");
+		out.print("<h2><a href=\"CreateQuiz.jsp\">Create Quiz</a></h2>");
+		out.print("<h2><a href=\"MyPageServlet?id="+username+"\">My Page</a></h2>");
+		out.print("<h2><a href=\"friends.jsp\">My Friends</a></h2>");
+		out.print("<h2><a href=\"mailbox.jsp\">MailBox</a></h2>");
+	}
+	%>
+</body>
+</html>

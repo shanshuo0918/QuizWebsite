@@ -1,0 +1,36 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<form action="NewQuestionServlet" method="post">
+<h3> You are now Creating a new Quiz! Please Following the steps!</h3>
+<h4> Step 1: Input the quiz information! </h4>
+Name:<input type="text" name="quizName"><br>
+Description:<textArea name="quizDescription" row="10" cols="60" ></textarea><br>
+Tag:<input type="text" name="tag"><br>
+Category:<select name="Category" >
+  <option value ="Others">Others</option>
+  <option value ="Math">Math</option>
+  <option value ="Science">Science</option>
+  <option value="History">History</option>
+  <option value="Phisics">Physics</option>
+  <option value ="Chemistry">Chemistry</option>
+  <option value="Biology">Biology</option>
+  <option value="Art">Art</option>
+</select><br>
+<input type="checkbox" name="isPracticeMode"> Allow Practice Mode
+<input type="checkbox" name="isRandomOrder"> Random Order<br>
+<input type="checkbox" name="isSinglePage"> All Question in Single Page
+<input type="checkbox" name="isCorrection"> Immediate Correction<br>
+<input type="submit" value="Add Question">
+</form>
+<hr>
+
+
+</body>
+</html>

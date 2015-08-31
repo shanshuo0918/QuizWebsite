@@ -1,0 +1,10 @@
+package database;
+
+public class TableNames {
+	public static final String ANNOUNCE_TB = "announcement";
+	public static final String QUIZ_SUM_TB = "quiz_summary";
+	public static final String QUIZ_HIST_TB = "quiz_history";
+	public static final String USERINFO_TB = "userinfo";
+	public static final String FRIEND_LIST_TB = "friend_list";
+	public static final String FRIEND_REQ_TB = "friend_request";
+}

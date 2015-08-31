@@ -1,0 +1,64 @@
+package user;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import database.DBConnection;
+import database.TableNames;
+
+public class UserFriend {
+	
+	
+	public static boolean getIsFriend(String user1, String user2){
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt;
+			stmt = con.createStatement();
+			String selectedColumn = "friendList";
+			ResultSet rs = stmt.executeQuery("select "+selectedColumn+
+											 " from "+TableNames.FRIEND_LIST_TB+
+											 " where username = \""+user1+"\""
+											);
+			rs.beforeFirst();
+			if(rs.next()){
+				String friendListStr =rs.getString(1);
+				String[] splits = friendListStr.split(",");
+				for(String user: splits){
+					if(user2.equals(user))
+						return true;
+				}
+			}else{
+				return false;
+			}
+		}catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	public static boolean hasSentRequest(String fromuser, String touser){
+		
+		return true;
+	}
+	
+	public static boolean hasReceivedRequest(String fromuser, String touser){
+		
+		return true;
+	}
+	
+	public static int getFriendship(String visitor, String pageowner){
+		int friendship;
+		if(visitor.equals(pageowner))
+			friendship = 0; // same user, visit own page
+		else if(UserFriend.getIsFriend(visitor,pageowner))
+			friendship = 1; // visitor is owner's friend
+		else if(!visitor.equals("guest"))
+			friendship = 2; // visitor is not owner's friend but is a user
+		else
+			friendship = 3; // visitor is a guest
+		return friendship;
+	}
+}

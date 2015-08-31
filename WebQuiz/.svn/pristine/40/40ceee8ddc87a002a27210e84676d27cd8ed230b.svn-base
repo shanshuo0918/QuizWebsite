@@ -1,0 +1,19 @@
+USE c_cs108_chishuen;
+
+DROP TABLE IF EXIST quiz_summary;
+
+CREATE TABLE quiz_summary (
+	quizName CHAR(32),
+	username CHAR(32),
+	quizDescription BLOB,
+	category CHAR(32),
+	tag CHAR(32),
+	practiceMode BOOLEAN,
+	randomOrder BOOLEAN,
+	isSinglePage BOOLEAN,
+	isCorrection BOOLEAN,
+	createTime TIMESTAMP,
+	questionType text,
+	questionID text
+
+);

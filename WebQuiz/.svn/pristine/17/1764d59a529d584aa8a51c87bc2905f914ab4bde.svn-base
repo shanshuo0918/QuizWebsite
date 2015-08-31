@@ -1,0 +1,137 @@
+<%@ page import="admin.Announce" %>
+<%@ page import="admin.Admin.*" %>
+<%@ page import="user.UserAccount" %>
+<%@ page import="java.util.*" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+    
+<%! 
+public String quizHREF(String id, String name){
+	return "<a href=\"QuizSummaryPage.jsp?id=" + id + "\">" + name + "</a>";
+}
+%>
+
+<%
+String username = (String) session.getAttribute("username");
+String loginFailMsg = (String) session.getAttribute("loginFailMsg");
+ArrayList<Announce> announceList = admin.Announce.getRecentAnnounce(5);
+ArrayList<HomepageQuiz> recentQuiz = admin.Admin.getHomepageQuiz(username,5,0);
+ArrayList<HomepageQuiz> popularQuiz = admin.Admin.getHomepageQuiz(username,5,1);
+%>
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>Quiz</title>
+</head>
+<body>
+	<% 
+	if(username.equals("guest")){
+		out.print("<p>Please log in</p>");
+		out.print("<form action=\"LoginServlet\" method=\"post\">");
+		out.print("<p>Username: <input type=\"text\" name=\"username\" /></p>");
+		out.print("<p>Password: <input type=\"password\" name=\"password\" /><input type=\"submit\" value=\"login\"/></p>");
+		out.print("</form>");
+		out.print("<a href=\"signup.jsp\">Sign Up</a>");
+	}else{
+		String displayName = (String) session.getAttribute("displayname");
+		if(displayName == null){
+			displayName = UserAccount.getDisplayName(username);
+			session.setAttribute("displayname", displayName);
+		}
+		out.print("Welcome "+displayName+"!");
+		out.print("<a href=\"LogoutServlet\">Log Out</a>");
+		out.print("<br>");
+		out.print("Search ");
+	}
+	%>
+	<% 
+	if(loginFailMsg != null){
+		out.print(loginFailMsg);
+		session.removeAttribute("loginFailMsg");
+	}
+	%>
+	<h1>Announcement</h1>
+	<% 
+	if(announceList == null || announceList.size() == 0)
+		out.print("No announcement.");
+	else{
+		out.print("<ul>");
+		for(Announce a: announceList){
+			out.print("<li>"+a.content+", "+a.datetime+"</li>");
+		}
+		out.print("</ul>");
+	}
+	%>
+	<h1>Recent Quizzes</h1>
+	<% 
+	if(recentQuiz == null || recentQuiz.size() == 0)
+		out.print("No quizzes.");
+	else{
+		out.print("<ul>");
+		for(HomepageQuiz quiz: recentQuiz){
+			out.print("<li>"+quizHREF(quiz.quizID,quiz.quizName)+", "+quiz.createTime+"</li>");
+		}
+		out.print("</ul>");
+	}
+	%>
+	<h1>Popular Quizzes</h1>
+	<% 
+	if(popularQuiz == null || popularQuiz.size() == 0)
+		out.print("No quizzes.");
+	else{
+		out.print("<ul>");
+		for(HomepageQuiz quiz: popularQuiz){
+			out.print("<li>"+quizHREF(quiz.quizID,quiz.quizName)+", rating: "+quiz.rating+"</li>");
+		}
+		out.print("</ul>");
+	}
+	%>
+	<%
+	// User's recent activity
+	if(username != null && !username.equals("guest")){
+		out.print("<h1>Your recent activities!</h1>");
+		
+		ArrayList<QuizHist> quizTaking = admin.Admin.getQuizTaking(username,5);
+		out.print("<h2>Recent Quiz Taking</h2>");
+		if(quizTaking == null || quizTaking.size() == 0)
+			out.print("Have not taken any quiz!");
+		else{
+			out.print("<ul>");
+			for(QuizHist quiz: quizTaking){
+				out.print("<li>"+quizHREF(quiz.quizID,quiz.quizName)+
+						        ", Date: "+quiz.submitTime+
+						        ", Score: "+quiz.score+
+						        ", Time Used: "+quiz.timeUsed+"</li>");
+			}
+			out.print("</ul>");
+		}
+		
+		out.print("<h2>Recent Quiz Creating</h2>");
+		ArrayList<HomepageQuiz> quizCreating = admin.Admin.getHomepageQuiz(username,5,2);
+		if(quizCreating == null || quizCreating.size() == 0)
+			out.print("Have not created any quiz!");
+		else{
+			out.print("<ul>");
+			for(HomepageQuiz quiz: quizCreating){
+				out.print("<li>"+quizHREF(quiz.quizID,quiz.quizName)+", "+quiz.createTime+"</li>");
+			}
+			out.print("</ul>");
+		}
+	}
+	%>
+	
+	<h1>Links:</h1>
+	<h2><a href="homepage.jsp">Home</a></h2>
+	<h2><a href="all-quizzes.jsp">Quizzes</a></h2>
+	<% 
+	if(!username.equals("guest")){
+		out.print("<h2><a href=\"CreateQuiz.jsp\">Create Quiz</a></h2>");
+		out.print("<h2><a href=\"mypage.jsp?pageowner="+username+"\">My Page</a></h2>");
+		out.print("<h2><a href=\"friends.jsp\">My Friends</a></h2>");
+		out.print("<h2><a href=\"mailbox.jsp\">MailBox</a></h2>");
+	}
+	%>
+	
+</body>
+</html>

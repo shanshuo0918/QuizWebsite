@@ -1,0 +1,78 @@
+package quiz;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import database.DBConnection;
+
+public class Matching extends Question {
+	protected final int numOfOptions;
+	protected final String choices;
+	
+	public Matching(String questionType, String questionID) {
+		super(questionType, questionID);
+		String query = "SELECT * FROM " + questionTypeTable + " WHERE questionID = \"" + questionID + "\"";
+		int tempNumOfOptions = 0;
+		String tempChoices = "";
+		
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			rs.next();
+			tempNumOfOptions = rs.getInt(7);
+			tempChoices = rs.getString(8);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		this.choices = tempChoices;
+		this.numOfOptions = tempNumOfOptions;
+	}
+	
+	public Matching(String questionType, String quizID, int timeLimit,
+			String question, String answer, int score, int numOfOptions, String choices) {
+		super(questionType, quizID, timeLimit, question, answer, score);
+		this.numOfOptions = numOfOptions;
+		this.choices = choices;
+	}
+	
+	public int getScore() {
+		return 0;
+	}
+	
+	@Override
+	public String doQuizPage() {
+		StringBuilder page = new StringBuilder();
+		ArrayList<String> answerList = getAnswerList();
+		ArrayList<String> choiceList = getChoiceList();
+		Collections.shuffle(answerList);
+		page.append("This is a Matching question, please match each statement on the left to the options on the right!");
+		page.append("<h4>Question: " + question + "</h4>");
+		for (int i = 0; i < answerList.size(); i++ ) {
+			page.append(choiceList.get(i) + "\t\t" + answerList.get(i) + "<br>");
+		}
+		return page.toString();
+	}
+	
+	protected ArrayList<String> getChoiceList() {
+		ArrayList<String> choiceList = new ArrayList<String>();
+		int start = 0;
+		int end = 0;
+		while (end < choices.length() - 1) {
+			if (choices.charAt(end) == '|') {
+				System.out.println(start);
+				System.out.println(end);
+				choiceList.add(choices.substring(start, end));
+				start = end + 1;
+			}
+			end ++;
+		}
+		choiceList.add(choices.substring(start));
+		return choiceList;
+	}
+	
+}

@@ -1,0 +1,70 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, quiz.*, java.text.*" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>request.getParameter("quizName")</title>
+</head>
+<body>
+<% 
+//String quizName = request.getParameter("quizName");
+String quizName = "Test Quiz";
+MyQuiz myquiz = new MyQuiz(quizName); 
+%>
+<ul>
+<li>Quiz Name: <%=quizName %></li>
+<li>Category: <%=myquiz.getCategory() %></li>
+<%
+out.println("<li>Tags: ");
+for (String tag: myquiz.getTag()) {
+	out.println(tag + " ");
+}
+out.println("</li>");
+%>
+<li>Total Score: <%=myquiz.getTotalScore() %></li>
+<li>Quiz Name: <%=quizName %></li>
+<li>Rating: <%=myquiz.getAvgRating() %></li>
+<%
+String challenge = "Challenge my friends!";
+out.println("<li><a href=\"Review.jsp?id=" +myquiz.getId() + "\">See reviews</a></li>");
+out.println("<li><a href=\"StartQuiz.jsp?id=" +myquiz.getId() + "\">Start!</a></li>");
+out.println("<li><a href=\"Practice.jsp?id=" +myquiz.getId() + "\">Practice Mode</a></li>");
+out.println("<li><a href=\"Challenge.jsp?id=" +myquiz.getId() + "\">" + challenge + "</a></li>");
+out.println("<li><a href=\"EditQuiz.jsp?id=" +myquiz.getId() + "\">Edit Quiz</a></li>");
+%>
+<li>Highest Score: <%=myquiz.getBestScore() %></li>
+<li>Lowest Score: <%=myquiz.getLowestScore() %></li>
+<li>Average Score: <%=myquiz.getAvgScore() %></li>
+<li>Total # of takers: <%=myquiz.getTakenTimes() %></li>
+<li>Top Performers
+<ol>
+<%
+for(MyQuiz.QuizEvent q: myquiz.getHighScoreEvents(5)) {
+	out.println("<li>" + q.getUserName() + " " + q.getScore() + " " + q.getTimeUsedFormat() + "</li>");
+}
+%>
+</ol>
+</li>
+<li>Top Performers in the last day
+<ol>
+<%
+for(MyQuiz.QuizEvent q: myquiz.getHighScoreEventsLastDay(5)) {
+	out.println("<li>" + q.getUserName() + " " + q.getScore() + " " + q.getTimeUsedFormat() + "</li>");
+}
+%>
+</ol>
+</li>
+<li>Recent Takers
+<ol>
+<%
+for(MyQuiz.QuizEvent q: myquiz.getRecentTakenEvents(5)) {
+	out.println("<li>" + q.getUserName() + " " + q.getScore() + " " + q.getTimeUsedFormat() + "</li>");
+}
+%>
+</ol>
+</li>
+</ul>
+</body>
+</html>

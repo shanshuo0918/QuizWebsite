@@ -1,0 +1,49 @@
+package quiz;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import database.DBConnection;
+
+public class PictureResponse extends Question {
+	protected final String imageURL;
+	
+	public PictureResponse(String questionType, String questionID) {
+		super(questionType, questionID);
+		
+		String query = "SELECT * FROM " + questionTypeTable + " WHERE questionID = \"" + questionID + "\"";
+		String tempImageURL = "";
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			rs.next();
+			tempImageURL = rs.getString(7);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		this.imageURL = tempImageURL;
+	}
+	
+	public PictureResponse(String quizID, int timeLimit,
+			String question, String answer, int score, String imageURL) {
+		super("PR", quizID, timeLimit, question, answer, score);
+		this.imageURL = imageURL;
+	}
+	
+	
+	@Override
+	public String doQuizPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("This is a Picture-Response question, please input your answer in "
+				+ "the text box after carefully reading the question and looking at the pictrue!");
+		page.append("<h4>Question: " + question + "</h4>");
+		page.append("<img src=\"" + imageURL + "\" /> <br>");
+		page.append("Your Answer: <input type=\"text\" name=\"answer_" + questionID + "\" required/><br>");
+		return page.toString();
+	}
+	
+	
+}

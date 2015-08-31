@@ -1,0 +1,117 @@
+package admin;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+
+import user.UserAccount;
+import user.UserFriend;
+import user.UserQuizCreate;
+import user.UserQuizTake;
+import database.DBConnection;
+import database.TableNames;
+
+public class SearchUser {
+	public String username;
+	public String displayname;
+	public String recentActivity;
+	public String date;
+	public String quizID;
+	
+	public SearchUser(String username, String displayname){
+		this.username = username;
+		this.displayname = displayname;
+		this.recentActivity = "";
+		this.date = "";
+		this.quizID = "";
+	}
+	
+	
+	/**
+	 * Return a list contains user's most recent act (including take and create),
+	 * whose username match the search key
+	 * @param key
+	 * @param visitor
+	 * @param exactMatch
+	 * @return
+	 */
+	public static ArrayList<SearchUser> searchUser(String key, String visitor, boolean exactMatch){
+		ArrayList<SearchUser> userList = new ArrayList<SearchUser>();
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt;
+			stmt = con.createStatement();
+			String searchCrit = (exactMatch)? " = \""+key+"\"" : " like \"%"+key+"%\"";
+			String selectedColumn = "username, displayname";
+			ResultSet rs = stmt.executeQuery("select "+selectedColumn+
+											 " from "+TableNames.USERINFO_TB+
+											 " where username"+searchCrit+
+											 " or displayname"+searchCrit+
+											 " order by username"
+											);
+			rs.beforeFirst();
+			while(rs.next()){
+				SearchUser user = new SearchUser(rs.getString(1),rs.getString(2));
+				UserAccount userinfo = UserAccount.getUserInfo(user.username);
+				int friendship = UserFriend.getFriendship(visitor,user.username);
+				boolean canSeeScore = (friendship > userinfo.privacy_quiz_score)? false:true;
+				
+				ArrayList<UserQuizTake> quizTake = new ArrayList<UserQuizTake>();
+				ArrayList<UserQuizCreate> quizCreate = new ArrayList<UserQuizCreate>();
+				if(friendship <= userinfo.privacy_quiz_take)  // can access
+					quizTake = UserQuizTake.quizTakeHist(user.username, "da", 1, 1);
+				if(friendship <= userinfo.privacy_quiz_create)  // can access
+					quizCreate = UserQuizCreate.quizCreateHist(user.username, "da", 1, 1);
+				
+				if(quizTake.size() == 0 && quizCreate.size() == 0){
+					;
+				}else if(quizTake.size() == 0){
+					user.recentActivity = quizCreateString(quizCreate.get(0));
+					user.quizID = quizCreate.get(0).quizID;
+					user.date = quizCreate.get(0).date;
+				}else if(quizCreate.size() == 0){
+					user.recentActivity = quizTakeString(quizTake.get(0),canSeeScore);
+					user.quizID = quizTake.get(0).quizID;
+					user.date = quizTake.get(0).date;
+				}else{
+					if(isNewer(quizTake.get(0).date,quizCreate.get(0).date)){
+						user.recentActivity = quizTakeString(quizTake.get(0),canSeeScore);
+						user.quizID = quizTake.get(0).quizID;
+						user.date = quizTake.get(0).date;
+					}else{
+						user.recentActivity = quizCreateString(quizCreate.get(0));
+						user.quizID = quizCreate.get(0).quizID;
+						user.date = quizCreate.get(0).date;
+					}
+				}
+				userList.add(user);
+			}
+			
+		}catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return userList;
+	}
+	
+	private static boolean isNewer(String s1, String s2){
+		Timestamp t1 = Timestamp.valueOf(s1);
+		Timestamp t2 = Timestamp.valueOf(s2);
+		return t1.after(t2);
+	}
+	
+	private static String quizCreateString(UserQuizCreate quiz){
+		String s = new String("created "+quiz.quizName+" on "+quiz.date.split(" ")[0]);
+		return s;
+	}
+	
+	private static String quizTakeString(UserQuizTake quiz, boolean canSeeScore){
+		String s = new String("took "+quiz.quizName+" on "+quiz.date.split(" ")[0]);
+		if(canSeeScore)
+			s = s + ", score = "+quiz.score;
+		return s;
+	}
+}

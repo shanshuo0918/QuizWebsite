@@ -1,0 +1,18 @@
+package user;
+
+import java.util.HashMap;
+
+public class Achievements {
+	public static final HashMap<String, String> achievementList;
+	static
+    {
+        achievementList = new HashMap<String, String>();
+        achievementList.put("Amateur Author", "Create a quiz.");
+        achievementList.put("Prolific Author", "Create five quizzes!");
+        achievementList.put("prodigious Author", "Create ten quizzes!");
+        achievementList.put("Quiz Machine", "Take ten quizzes!");
+        achievementList.put("I am the Greatest", "Get highest score on a quiz!");
+        achievementList.put("Practice Makes Perfect", "Take a quiz in practice mode.");
+
+    }
+}

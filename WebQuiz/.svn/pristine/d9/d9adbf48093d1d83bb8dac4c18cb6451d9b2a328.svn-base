@@ -1,0 +1,70 @@
+package user;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.*;
+
+import database.DBConnection;
+
+public class Achievement {
+	public String title;
+	public String desc;
+	public String img;
+	
+	public static final HashMap<String, Achievement> achievementList;
+	
+	public Achievement(String title, String desc, String img){
+		this.title = title;
+		this.desc = desc;
+		this.img = img;
+	}
+	
+	static
+    {
+        achievementList = new HashMap<String, Achievement>();
+        achievementList.put("Amateur Author", new Achievement("Amateur Author",
+        													   "Create a quiz.",
+        													   "img/amateur.jpg"));
+        achievementList.put("Prolific Author", new Achievement("Prolific Author",
+															    "Create five quizzes!",
+															    "img/prolific.jpg"));
+        achievementList.put("Prodigious Author", new Achievement("Prodigious Author",
+															    "Create ten quizzes!",
+															    "img/prodigious.jpg"));
+        achievementList.put("Quiz Machine", new Achievement("Quiz Machine",
+														    "Take ten quizzes!",
+														    "img/machine.jpg"));
+        achievementList.put("I am the Greatest", new Achievement("I am the Greatest",
+															    "Get highest score on a quiz!",
+															    "img/greatest.jpg"));
+        achievementList.put("Practice Makes Perfect", new Achievement("Practice Makes Perfect",
+															    "Take a quiz in practice mode.",
+															    "img/practice.jpg"));
+    }
+	
+	public static Set<String> getAchievement(String username){
+		HashSet<String> achievements = new HashSet<String>();
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt;
+			stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("select achievement from "+database.TableNames.USERINFO_TB+
+					 " where username = \""+username+"\"");
+			
+			rs.beforeFirst();
+			if(rs.next()){
+				List<String> achs = util.Helper.parseTags(rs.getString(1));
+				achievements = new HashSet<String>(achs);
+			}else{
+				// no such user
+				achievements = null;
+			}
+		}catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return achievements;
+	}
+}

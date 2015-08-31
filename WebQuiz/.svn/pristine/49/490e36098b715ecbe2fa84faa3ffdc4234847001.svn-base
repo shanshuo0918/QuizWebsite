@@ -1,0 +1,61 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ page import="quiz.*"%>
+<%@ page import="java.util.*" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<%
+	String quizID = request.getParameter("ID");
+	MyQuiz quiz = new MyQuiz(quizID, 1);
+	List<Question> questionList = (List<Question>)session.getAttribute("questionList");
+	int currentIndex = (Integer)session.getAttribute("currentIndex");
+	Question question = questionList.get(currentIndex);
+%>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<form action="MultiPageQuizServlet" method="post">
+<%
+	out.println(question.doQuizPage());
+
+	if (currentIndex == questionList.size() - 1) {
+		out.println("Almost there! This is your last question!");
+	}
+	
+%>
+<input name="quizID" type="hidden" value="<%= quiz.getId() %>">
+<input type = "submit" value = "Submit Answer">
+</form>
+<hr>
+<%
+ 	if (quiz.isCorrection()) {
+ 		out.println("<h4> Your Score here: </h4>");
+ 		out.println("<table style=\"width:100%\">");
+ 		out.println("<tr>");
+ 		out.println("<th>Question Index</th>");
+ 		out.println("<th>Your Answer</th>");
+ 		out.println("<th>Correct Answer</th>");
+ 		out.println("<th>Your Score</th>");
+ 		out.println("</tr>");
+ 		
+ 		List<String> userAnswer = (List<String>)session.getAttribute("userAnswer");
+		List<String> correctAnswer = (List<String>)session.getAttribute("correctAnswer");
+		List<String> userScoreList = (List<String>)session.getAttribute("userScoreList");
+		
+		for (int i = 1; i <= userAnswer.size(); i++) {
+ 				out.println("<tr>");
+ 				out.println("<td>" + i + "</td>");
+ 				out.println("<td>" + userAnswer.get(i-1) + "</td>");
+ 				out.println("<td>" + correctAnswer.get(i-1) + "</td>");
+ 				out.println("<td>" + userScoreList.get(i-1) + "</td>");
+ 				out.println("</tr>");
+ 			}	
+ 		out.println("</table>");
+ 	}
+%>
+
+
+</body>
+</html>

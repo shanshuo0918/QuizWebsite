@@ -1,0 +1,380 @@
+package quiz;
+
+import javax.servlet.http.HttpServletRequest;
+
+public class QuestionHelper {
+	public static Question getQuestion(String questionType, String questionId){
+		switch(questionType){
+		case "QR":
+			return new QuestionResponse(questionType, questionId);
+		case "FIB":
+			return new FillInBlank(questionType, questionId);
+		case "MC":
+			return new MultipleChoice(questionType, questionId);
+		case "PR":
+			return new PictureResponse(questionType, questionId);
+		case "MA":
+			return new MultipleAnswer(questionType, questionId);
+		case "MCMA":
+			return new MultiChoiceMultiAnswer(questionType, questionId);
+		case "MATCH":
+			return new Matching(questionType, questionId);
+		}
+			
+		return null;
+	}
+	
+	public static String createQuestionPage(String questionType) {
+		switch(questionType){
+		case "QR":
+			return createQRPage();
+		case "FIB":
+			return createFIBPage();
+		case "MC":
+			return createMCPage();
+		case "PR":
+			return createPRPage();
+		case "MA": 
+			return createMAPage();
+		case "MCMA": 
+			return createMCMAPage();
+		case "MATCH": 
+			return createMATCHPage();
+		}	
+		return null;
+	}
+	
+	public static Question createQuestion(String questionType, HttpServletRequest request) {
+		switch(questionType){
+		case "QR":
+			return createQRQuestion(request);
+		case "FIB":
+			return createFIBQuestion(request);
+		case "MC":
+			return createMCQuestion(request);
+		case "PR":
+			return createPRQuestion(request);
+		case "MA": 
+			return createMAQuestion(request);
+		case "MCMA": 
+			return createMCMAQuestion(request);
+		case "MATCH": 
+			return createMATCHQuestion(request);
+		}
+		return null;
+	}
+	
+	private static String createQRPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<form action=\"SaveQuestionServlet\" method=\"post\">");
+		page.append("<h3>You are creating a Question-Response question!</h3>\n");
+		page.append("Question (Please type your question in the textAera below): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"10\" cols=\"60\" required></textarea><br>");
+		page.append("Answer (If you have mutiple possible answers, please put them in different line): <br>");
+		page.append("<textarea name=\"answer\" rows=\"5\" cols=\"60\" required></textarea><br>");
+		page.append("Score (How many points for the question): <input type=\"text\" name=\"score\" required/><br>");
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): <input type=\"text\" name=\"time\"/><br>");
+		page.append("<input type=\"hidden\" name=\"questionType\" value=\"QR\"></input><br>");
+		page.append("<input type=\"submit\" value=\"Add this question\">");
+		page.append("</form>");
+		return page.toString();
+	}
+	
+	private static String createFIBPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<form action=\"SaveQuestionServlet\" method=\"post\">");
+		page.append("<h3>You are creating a Fill-In-Blank question!</h3>\n");
+		page.append("Question (Please seperate your question in two textAera below): <br>");
+		page.append("<textarea name=\"question1\" rows=\"5\" cols=\"60\" required></textarea><br>");
+		page.append("<textarea name=\"question2\" rows=\"5\" cols=\"60\" required></textarea><br>");
+		page.append("Answer (If you have mutiple possible answers, please put them in different lines): <br>");
+		page.append("<textarea name=\"answer\" rows=\"5\" cols=\"60\" required></textarea><br>");
+		page.append("Score (How many points for the question): <input type=\"text\" name=\"score\" required/><br>");
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): <input type=\"text\" name=\"time\"/><br>");
+		page.append("<input type=\"hidden\" name=\"questionType\" value=\"FIB\"></input><br>");
+		page.append("<input type=\"submit\" value=\"Add this question\">");
+		page.append("</form>");
+		return page.toString();
+	}
+	
+	private static String createMCPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<form action=\"SaveQuestionServlet\" method=\"post\">");
+		page.append("<h3>You are creating a Multiple-Choice question!</h3>\n");
+		page.append("Question (Please type your question in the textAera below): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"10\" cols=\"60\" required></textarea><br>");
+		page.append("Answer (Please input any possible answer in the blanks, and select the right answer, you answer should have 5 or less options): <br>");
+		
+		page.append("<input type=\"radio\" name=\"options\" value=\"option1\"><input type=\"text\" name=\"option1\"/><br>");
+		page.append("<input type=\"radio\" name=\"options\" value=\"option2\"><input type=\"text\" name=\"option2\"/><br>");
+		page.append("<input type=\"radio\" name=\"options\" value=\"option3\"><input type=\"text\" name=\"option3\"/><br>");
+		page.append("<input type=\"radio\" name=\"options\" value=\"option4\"><input type=\"text\" name=\"option4\"/><br>");
+		page.append("<input type=\"radio\" name=\"options\" value=\"option5\"><input type=\"text\" name=\"option5\"/><br>");
+		
+		page.append("Score (How many points for the question): <input type=\"text\" name=\"score\" required/><br>");
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): <input type=\"text\" name=\"time\"/><br>");
+		page.append("<input type=\"hidden\" name=\"questionType\" value=\"MC\"></input><br>");
+		page.append("<input type=\"submit\" value=\"Add this question\">");
+		page.append("</form>");
+		return page.toString();
+	}
+	
+	private static String createPRPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<form action=\"SaveQuestionServlet\" method=\"post\">");
+		page.append("<h3>You are creating a Picture-Response question!</h3>\n");
+		page.append("Question (Please type your question in the textAera below): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"10\" cols=\"60\" required></textarea><br>");
+		page.append("Your image URL (Please paste your image URL here): <br>");
+		page.append("<textarea name=\"image\" rows=\"5\" cols=\"60\" required></textarea><br>");
+		page.append("Answer (If you have mutiple possible answers, please put them in different line): <br>");
+		page.append("<textarea name=\"answer\" rows=\"5\" cols=\"60\" required></textarea><br>");
+		page.append("Score (How many points for the question): <input type=\"text\" name=\"score\" required/><br>");
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): <input type=\"text\" name=\"time\"/><br>");
+		page.append("<input type=\"hidden\" name=\"questionType\" value=\"PR\"></input><br>");
+		page.append("<input type=\"submit\" value=\"Add this question\">");
+		page.append("</form>");
+		return page.toString();
+	}
+	
+	private static String createMAPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<form action=\"SaveQuestionServlet\" method=\"post\">");
+		page.append("<h3>You are creating a Question-Response question!</h3>\n");
+		page.append("Question (Please type your question in the textAera below): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"10\" cols=\"60\" required></textarea><br>");
+		page.append("Answer (If you have mutiple possible answers, please put them in different line): <br>");
+		page.append("<textarea name=\"answer\" rows=\"5\" cols=\"60\" required></textarea><br>");
+		page.append("<input type=\"checkbox\" name=\"isOrder\">Answer must in given order<br>");
+		page.append("Score (How many points for the question): <input type=\"text\" name=\"score\" required/><br>");
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): <input type=\"text\" name=\"time\"/><br>");
+		page.append("<input type=\"hidden\" name=\"questionType\" value=\"MA\"></input><br>");
+		page.append("<input type=\"submit\" value=\"Add this question\">");
+		page.append("</form>");
+		return page.toString();
+	}
+	
+	private static String createMCMAPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<form action=\"SaveQuestionServlet\" method=\"post\">");
+		page.append("<h3>You are creating a Multiple-Choice question!</h3>\n");
+		page.append("Question (Please type your question in the textAera below): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"10\" cols=\"60\" required></textarea><br>");
+		page.append("Answer (Please input any possible answer in the blanks, and select the right answer, you answer should have 5 or less options): <br>");
+		
+		page.append("<input type=\"checkbox\" name=\"options\" value=\"option1\"><input type=\"text\" name=\"option1\"/><br>");
+		page.append("<input type=\"checkbox\" name=\"options\" value=\"option2\"><input type=\"text\" name=\"option2\"/><br>");
+		page.append("<input type=\"checkbox\" name=\"options\" value=\"option3\"><input type=\"text\" name=\"option3\"/><br>");
+		page.append("<input type=\"checkbox\" name=\"options\" value=\"option4\"><input type=\"text\" name=\"option4\"/><br>");
+		page.append("<input type=\"checkbox\" name=\"options\" value=\"option5\"><input type=\"text\" name=\"option5\"/><br>");
+		
+		page.append("Score (How many points for the question): <input type=\"text\" name=\"score\" required/><br>");
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): <input type=\"text\" name=\"time\"/><br>");
+		page.append("<input type=\"hidden\" name=\"questionType\" value=\"MCMA\"></input><br>");
+		page.append("<input type=\"submit\" value=\"Add this question\">");
+		page.append("</form>");
+		return page.toString();
+	}
+	
+	private static String createMATCHPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<form action=\"SaveQuestionServlet\" method=\"post\">");
+		page.append("<h3>You are creating a Multiple-Answer question!</h3>\n");
+		page.append("Question (Please type your question in the textAera below): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"10\" cols=\"60\" required></textarea><br>");
+		page.append("Answer (If you have mutiple possible answers, please put them in different line): <br>");
+		
+		page.append("<input type=\"text\" name=\"option1\"/>--<input type=\"text\" name=\"answer1\"/><br>");
+		page.append("<input type=\"text\" name=\"option2\"/>--<input type=\"text\" name=\"answer2\"/><br>");
+		page.append("<input type=\"text\" name=\"option3\"/>--<input type=\"text\" name=\"answer3\"/><br>");
+		page.append("<input type=\"text\" name=\"option4\"/>--<input type=\"text\" name=\"answer4\"/><br>");
+		page.append("<input type=\"text\" name=\"option5\"/>--<input type=\"text\" name=\"answer5\"/><br>");
+		
+		page.append("Score (How many points for the question): <input type=\"text\" name=\"score\" required/><br>");
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): <input type=\"text\" name=\"time\"/><br>");
+		page.append("<input type=\"hidden\" name=\"questionType\" value=\"MATCH\"></input><br>");
+		page.append("<input type=\"submit\" value=\"Add this question\">");
+		page.append("</form>");
+		return page.toString();
+	}
+	
+	private static QuestionResponse createQRQuestion(HttpServletRequest request) {
+		String question = request.getParameter("questionDescription");
+		String answer = answerFormatter(request.getParameter("answer"));
+		int timeLimit = 0;
+		if (request.getParameter("time") != "") {
+			timeLimit = Integer.parseInt(request.getParameter("time"));
+		}
+		int score = Integer.parseInt(request.getParameter("score"));
+		QuestionResponse newQuestion = new QuestionResponse("NotGiven", timeLimit, question, answer, score);
+		return newQuestion;
+	}
+	
+	private static FillInBlank createFIBQuestion(HttpServletRequest request) {
+		String question1 = request.getParameter("question1");
+		String question2 = request.getParameter("question2");
+		String question = question1 + "|" + question2;
+		String answer = answerFormatter(request.getParameter("answer"));
+		int timeLimit = 0;
+		if (request.getParameter("time") != "") {
+			timeLimit = Integer.parseInt(request.getParameter("time"));
+		}
+		int score = Integer.parseInt(request.getParameter("score"));
+		FillInBlank newQuestion = new FillInBlank("NotGiven", timeLimit, question, answer, score);
+		return newQuestion;
+	}
+	
+	private static MultipleChoice createMCQuestion(HttpServletRequest request) {
+		String question = request.getParameter("questionDescription");
+		String answer = request.getParameter(request.getParameter("options"));
+		String options = generateOptions(request);
+		int timeLimit = 0;
+		if (request.getParameter("time") != "") {
+			timeLimit = Integer.parseInt(request.getParameter("time"));
+		}
+		int score = Integer.parseInt(request.getParameter("score"));
+		MultipleChoice newQuestion = new MultipleChoice("NotGiven", timeLimit, question, answer, score, options);
+		return newQuestion;
+	}
+	
+	private static PictureResponse createPRQuestion(HttpServletRequest request) {
+		String question = request.getParameter("questionDescription");
+		String answer = answerFormatter(request.getParameter("answer"));
+		String imageURL = request.getParameter("image");
+		int timeLimit = 0;
+		if (request.getParameter("time") != "") {
+			timeLimit = Integer.parseInt(request.getParameter("time"));
+		}
+		int score = Integer.parseInt(request.getParameter("score"));
+		PictureResponse newQuestion = new PictureResponse("NotGiven", timeLimit, question, answer, score, imageURL);
+		return newQuestion;
+	}
+	
+	private static MultipleAnswer createMAQuestion(HttpServletRequest request) {
+		String question = request.getParameter("questionDescription");
+		String answer = answerFormatter(request.getParameter("answer"));
+		int timeLimit = 0;
+		if (request.getParameter("time") != "") {
+			timeLimit = Integer.parseInt(request.getParameter("time"));
+		}
+		int score = Integer.parseInt(request.getParameter("score"));		
+		int numOfAns = countNumOfAns(answer);
+		boolean isOrder = false;
+		if (request.getParameter("isOrder") != null) {
+			isOrder = true;
+		}
+		MultipleAnswer newQuestion = new MultipleAnswer("NotGiven", timeLimit, question, answer, score, numOfAns, isOrder);
+		return newQuestion;
+	}
+	
+	private static MultiChoiceMultiAnswer createMCMAQuestion(HttpServletRequest request) {
+		String question = request.getParameter("questionDescription");
+		String answer = generateAnswer(request);
+		String options = generateOptions(request);
+		int timeLimit = 0;
+		if (request.getParameter("time") != "") {
+			timeLimit = Integer.parseInt(request.getParameter("time"));
+		}
+		int score = Integer.parseInt(request.getParameter("score"));	
+		MultiChoiceMultiAnswer newQuestion = new MultiChoiceMultiAnswer("NotGiven", timeLimit, question, answer, score, options);
+		return newQuestion;
+	}
+	
+	private static Matching createMATCHQuestion(HttpServletRequest request) {
+		String question = request.getParameter("questionDescription");
+		String answer = generateAnswers(request);
+		String options = generateOptions(request);
+		int timeLimit = 0;
+		if (request.getParameter("time") != "") {
+			timeLimit = Integer.parseInt(request.getParameter("time"));
+		}
+		int score = Integer.parseInt(request.getParameter("score"));
+		int numOfOptions = countNumOfAns(answer);
+		Matching newQuestion = new Matching("NotGiven", timeLimit, question, answer, score, numOfOptions, options);
+		return newQuestion;
+	}
+	
+	public static String generateAnswer(HttpServletRequest request){
+		String[] answers = request.getParameterValues("options");
+		String answer = "";
+		for (int i = 0; i < answers.length - 1; i ++) {
+			answer += request.getParameter(answers[i]);
+			answer += "|";
+		}
+		answer += request.getParameter(answers[answers.length - 1]);
+		return answer;
+	}
+	
+	static int countNumOfAns(String answer) {
+		int count = 0;
+		for (int i = 0; i < answer.length(); i++) {
+			if (answer.charAt(i) == '|') {
+				count ++;
+			}
+		}
+		return count + 1;
+	}
+	
+
+	public static String generateAnswers(HttpServletRequest request) {
+		String answers = "";
+		if (request.getParameter("answer1") != "") {
+			answers += request.getParameter("answer1");
+			answers += "|";
+		}
+		if (request.getParameter("answer2") != "") {
+			answers += request.getParameter("answer2");
+			answers += "|";
+		}
+		if (request.getParameter("answer3") != "") {
+			answers += request.getParameter("answer3");
+			answers += "|";
+		}
+		if (request.getParameter("answer4") != "") {
+			answers += request.getParameter("answer4");
+			answers += "|";
+		}
+		if (request.getParameter("answer5") != "") {
+			answers += request.getParameter("answer5");
+			answers += "|";
+		}
+		return answers.substring(0, answers.length() - 1);
+	}
+	
+	public static String generateOptions(HttpServletRequest request) {
+		String options = "";
+		if (request.getParameter("option1") != "") {
+			options += request.getParameter("option1");
+			options += "|";
+		}
+		if (request.getParameter("option2") != "") {
+			options += request.getParameter("option2");
+			options += "|";
+		}
+		if (request.getParameter("option3") != "") {
+			options += request.getParameter("option3");
+			options += "|";
+		}
+		if (request.getParameter("option4") != "") {
+			options += request.getParameter("option4");
+			options += "|";
+		}
+		if (request.getParameter("option5") != "") {
+			options += request.getParameter("option5");
+			options += "|";
+		}
+		return options.substring(0, options.length() - 1);
+	}
+	
+	public static String answerFormatter(String answer) {
+		System.out.println(answer.length());
+		StringBuilder newAnswer = new StringBuilder(answer);
+		for (int i = 0; i< newAnswer.length(); i++) {
+			if (newAnswer.charAt(i) == '\n') {
+				newAnswer.setCharAt(i, '|');
+				newAnswer.deleteCharAt(i-1);
+			}
+		}
+		return newAnswer.toString();
+	}
+}

@@ -1,0 +1,60 @@
+<%@ page import="admin.*" %>
+<%@ page import="java.util.*" %>
+
+<% 
+ArrayList<Announce> announces = Announce.getRecentAnnounce(-1);
+%>
+
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=UTF-8 />
+	<title>Admin</title>
+</head>
+<body>
+	<table align="left" style="width:100%" border=1>
+		<tr>
+			<th><a href="admin.jsp"><font size=4 color=red>Announcement</font></a></th>
+			<th><a href="admin-account.jsp"><font size=4 color=red>Account Manager</font></a></th>
+			<th><a href="QuizManagement.jsp"><font size=4 color=red>Quiz Manager</font></a></th>
+			<th><a href="stats.jsp"><font size=4 color=red>Statistics</font></a></th>
+		</tr>
+	</table>
+	<br><br>
+	
+	
+	<form method=post action="DelAnnServlet">
+	<table align="left" style="width:45%">
+		<caption>Delete Announcement</caption>
+		<tr>
+		<th>Announcement</th>
+		<th>Select</th>
+		</tr>
+		<% 
+		for(int i = 0; i < announces.size();i++ ){
+			out.println("<tr>");
+			out.println("<td align=center><textarea rows=1 cols=50 readonly>"+announces.get(i).content+"</textarea></td>");
+			out.println("<td align=center><input type=checkbox name=aBox value=\""+announces.get(i).datetime+"\"></textarea></td>");
+			out.println("</tr>");
+		}
+		%>
+		<tr>
+		<td></td>
+		<td align=right><input type="submit" value="Delete"/></td>
+		</tr>
+	</table>
+	</form>
+	
+	<form method=post action="MakeAnnServlet">
+	<table align="right" style="width:45%">
+		<caption>Make Announcement</caption>
+		<tr><td align=center><input type=text name=content style="width:300px; height:300px;"/></td></tr>
+		<tr><td align=center><input type="submit" value="Announce"/></td></tr>
+	</table>
+	</form>
+	
+	<br><br>
+	<a href="homepage.jsp"><font size=4>Home</font></a>
+</body>
+</html>

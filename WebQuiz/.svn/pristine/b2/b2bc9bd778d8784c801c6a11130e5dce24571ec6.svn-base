@@ -1,0 +1,235 @@
+package quiz;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+
+import javax.servlet.http.HttpServletRequest;
+
+import database.DBConnection;
+
+public abstract class Question {
+	protected final String quizID;
+	protected final String questionType;
+	protected final String questionTypeTable;
+	protected final String questionID;
+	protected final String question;
+	protected final String answer;
+	protected final int timeLimit;
+	protected final int score;
+	
+	public Question (String questionType, String questionID) {
+		this.questionType = questionType;
+		this.questionID = questionID;
+		questionTypeTable = getTable(questionType);
+		String query = "SELECT * FROM " + questionTypeTable + " WHERE questionID = \"" + questionID + "\"";
+		String tempQuizID = "";
+		String tempQuestion = "";
+		String tempAnswer = "";
+		int tempTimeLimit = 0;
+		int tempScore = 0;
+		System.out.println(query);
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			
+			rs.next();
+			tempQuizID =rs.getString(2);
+			tempQuestion = rs.getString(4);
+			tempAnswer = rs.getString(5);
+			tempTimeLimit = Integer.parseInt(rs.getString(3));
+			tempScore = Integer.parseInt(rs.getString(6));
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		this.quizID = tempQuizID;
+		this.question = tempQuestion;
+		this.answer = tempAnswer;
+		this.timeLimit = tempTimeLimit;
+		this.score = tempScore;
+	}
+	
+	public Question(String questionType, String quizID, int timeLimit, String question, String answer, int score) {
+		this.questionType = questionType;
+		this.questionTypeTable = getTable(questionType);
+		// We generate a questionID for the question no matter the question will be add to database or not.
+		this.questionID = generateQuestionID(questionType);
+		this.quizID = quizID;
+		this.timeLimit = timeLimit;
+		this.question = question;
+		this.answer = answer;
+		this.score = score;	
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if (this==other) {
+			return true;
+		}
+		if (!(other instanceof Question)) {
+			return false;
+		}
+		Question oth = (Question)other;
+		return questionID.equals(oth.questionID);
+	}
+	
+	
+	public void addQuestion() {
+		String query = "INSERT INTO " + questionTypeTable + " VALUES(\"" + questionID + "\", \"" + quizID +
+				"\", \"" + timeLimit + "\", \"" + question + "\", \"" + answer + "\", \"" + score + "\");" ;
+		System.out.println(query);
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			stmt.executeUpdate(query);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void updateQuizID(String quizID) {
+		String query = "UPDATE " + questionTypeTable + " SET quizID = \"" + quizID + "\" WHERE questionID = \"" + questionID + "\";";
+		System.out.println(query);
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			stmt.executeUpdate(query);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public int getScore(String userAnswer) {
+		ArrayList<String> answerList = getAnswerList();
+		for (int i = 0; i < answerList.size(); i++) {
+			System.out.println(answerList.get(i));
+			if (userAnswer.equalsIgnoreCase(answerList.get(i))) {
+				return score;
+			}
+		}
+		return 0;
+	}
+	
+	public String doQuizPage() {
+		return "";
+	}
+	
+	public String editQuestionPage() {
+		return "";
+	}
+	
+	/**
+	 * Not change for QR, MC, PR, MCMA, MA types of question
+	 * @return
+	 */
+	public String getQuestion() {
+		return question;
+	}
+	
+	public String getAnswer() {
+		return answer;
+	}
+	
+	public int getMaxScore() {
+		return score;
+	}
+	
+	public int getTimeLimit() {
+		return timeLimit;
+	}
+	
+	public String getType() {
+		return questionType;
+	}
+	
+	public String getId() {
+		return questionID;
+	}
+	
+	public String getUserAnswer(HttpServletRequest request) {
+		String userAnswer = request.getParameter("answer_" + getId());
+		if (userAnswer == null)
+			userAnswer = "";
+		return userAnswer;
+	}
+	
+	public void updateQuestion(HttpServletRequest request) {
+		
+	}
+	
+	// Not tested
+	protected ArrayList<String> getAnswerList() {
+		ArrayList<String> answerList = new ArrayList<String>();
+		int start = 0;
+		int end = 0;
+		while (end < answer.length() - 1) {
+			if (answer.charAt(end) == '|') {
+				answerList.add(answer.substring(start, end));
+				start = end + 1;
+			}
+			end ++;
+		}
+		answerList.add(answer.substring(start));
+		return answerList;
+	}
+	
+	private String generateQuestionID(String questionType) {
+		String query = "SELECT questionID FROM " + questionTypeTable + " WHERE question = \"This is used for generate ID\"";
+		String currentID = "";
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			rs.next();
+			currentID = rs.getString(1);
+			query = "UPDATE " + questionTypeTable + " SET questionID = \"" + incrementID(currentID) + 
+					"\" WHERE question = \"This is used for generate ID\"";
+			stmt.executeUpdate(query);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return currentID;
+	}
+	
+	private String incrementID(String currentID) {
+		int numberID = Integer.parseInt(currentID.substring(questionType.length()));
+		numberID ++;
+		String nextID = questionType +  numberID;
+		return nextID;
+	}
+	
+	//Not test
+	protected String answerInLines() {
+		ArrayList<String> answerList = getAnswerList();
+		StringBuilder answer = new StringBuilder();
+		for(int i = 0; i < answerList.size() - 1; i ++) {
+			answer.append(answerList.get(i) + "\n");
+		}
+		answer.append(answerList.get(answerList.size() - 1));
+		return answer.toString();
+	}
+	
+	private String getTable(String questionType) {
+		switch (questionType) {
+		case "QR":
+			return "question_response";
+		case "FIB":
+			return "fill_in_blank";
+		case "MC":
+			return "multiple_choice";
+		case "PR":
+			return "picture_response";
+		case "MA":
+			return "multiple_answer";
+		case "MCMA":
+			return "multi_choice_multi_answer";
+		case "MATCH":
+			return "matching";
+		}
+		return "error";
+	}
+
+}

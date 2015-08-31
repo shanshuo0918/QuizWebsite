@@ -1,0 +1,381 @@
+package user;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+/**
+ * Servlet implementation class MyPageServlet
+ */
+@WebServlet("/MyPageServlet")
+public class MyPageServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+    /**
+     * @see HttpServlet#HttpServlet()
+     */
+    public MyPageServlet() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		HttpSession session = request.getSession();
+		String visitor = (String) session.getAttribute("username");
+		String pageowner = request.getParameter("id");
+		String tab = request.getParameter("tab");
+		if(tab == null){
+			tab = "qt";
+		}
+		String shortInd = request.getParameter("ind");
+		if(shortInd == null){
+			shortInd = "da";
+		}
+		String orderStr = request.getParameter("order");
+		int order = (orderStr == null)? 1: Integer.parseInt(orderStr);
+		
+		// get page owner information
+		UserAccount ownerAcc = UserAccount.getUserInfo(pageowner);
+		if(ownerAcc == null){
+			RequestDispatcher rd = request.getRequestDispatcher("invalid-user.jsp");
+			if(pageowner == null)
+				request.setAttribute("errorMsg","User name is not specified.");
+			else
+				request.setAttribute("errorMsg","User: "+pageowner+" does not exist!");
+			rd.forward(request,response);
+		}
+		
+		int friendship = UserFriend.getFriendship(visitor,pageowner);
+		
+		// Print html title
+		response.setContentType("text/html; charset=UTF-8");
+		PrintWriter out = response.getWriter();
+		out.println("<!DOCTYPE html>");
+		out.println("<head>");
+		out.println("<meta charset=\"UTF-8\" />");
+		out.println("<title>My Page</title>");
+		out.println("</head>");
+		out.println("<body>");
+		
+		// Display name
+		out.println("<h1 id=\"display\">"+ownerAcc.displayname+" Personal Page</h1>");
+		
+		// Add friend or send message button 
+		if(friendship == 1){ // already friend
+			out.println("<form action=\"SendMessgeServlet\" method=\"get\">");  //#go to peichen's servlet
+			out.println("<input type=\"submit\" value=\"Send Message\">");
+			out.println("<input type=\"hidden\" name=\"receiver\" value=\""+pageowner+"\">");
+			out.println("</form>");
+		}else if(friendship == 2){  // is legit user but not friend
+			if(UserFriend.hasSentRequest(visitor,pageowner)){  //#sync method with peichen
+				out.println("<input type=\"submit\" value=\"Wait For Response\" disabled>");
+			}else if(UserFriend.hasReceivedRequest(visitor,pageowner)){
+				out.println("<form action=\"AcceptFriendServlet\" method=\"post\">");  //#go to peichen's servlet
+				out.println("<input type=\"submit\" value=\"Accept\">");
+				out.println("<input type=\"hidden\" name=\"receiver\" value=\""+pageowner+"\">");  //#sync name with peichen 
+				out.println("</form>");
+				out.println("<form action=\"RejectFriendServlet\" method=\"post\">");  //#go to peichen's servlet
+				out.println("<input type=\"hidden\" name=\"receiver\" value=\""+pageowner+"\">");  //#sync name with peichen 
+				out.println("<input type=\"submit\" value=\"Reject\">");
+				out.println("</form>");
+			}else{
+				out.println("<form action=\"AddFriendServlet\" method=\"post\">");  //#go to peichen's servlet
+				out.println("<input type=\"hidden\" name=\"receiver\" value=\""+pageowner+"\">");  //#sync name with peichen 
+				out.println("<input type=\"submit\" value=\"Add Friend\">");
+				out.println("</form>");
+			}
+		}
+		out.println("<br>");
+		
+		
+		// Display title
+		out.println("<h2>"+tableTitle(tab)+"</h2>\n");
+		
+		//Display Tabs
+		out.println("<table style=\"width:80%\">");
+		out.println("<tr>");
+		out.println("<th><a href=\"MyPageServlet?id="+pageowner+"&tab=qt&ind=da&order=1\"><font color=\"green\" size=\"5\">Quiz Taking History</font></a></th>");
+		out.println("<th><a href=\"MyPageServlet?id="+pageowner+"&tab=qc&ind=da&order=1\"><font color=\"green\" size=\"5\">Quiz Creating History</font></a></th>");
+		out.println("<th><a href=\"MyPageServlet?id="+pageowner+"&tab=ac\"><font color=\"green\" size=\"5\">Achievement</font></a></th>");
+		out.println("<th><a href=\"MyPageServlet?id="+pageowner+"&tab=as\"><font color=\"green\" size=\"5\">Account Setting</font></a></th>");
+		out.println("</tr>");
+		out.println("</table>");
+		
+		//Display content
+		if(tab.equals("qt")){
+			out.println(getQuizTakeHistHTML(pageowner,friendship,
+					ownerAcc.privacy_quiz_take,ownerAcc.privacy_quiz_score,shortInd,order));
+		}else if(tab.equals("qc")){
+			out.println(getQuizCreateHistHTML(pageowner,friendship,
+					ownerAcc.privacy_quiz_create,shortInd,order));
+		}else if(tab.equals("ac")){
+			out.println(getAchievementsHTML(pageowner,friendship,
+					ownerAcc.privacy_achieve));
+		}else if(tab.equals("as")){ 
+			out.println(getAccountSettingHTML(ownerAcc,friendship));
+		}else{
+			//error handling
+		}
+		
+		out.println("<br><a href=homepage.jsp>Homepage</a>");
+		
+		out.println("</body>");
+		out.println("</html>");
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+	}
+
+	/**
+	 * return the HTML code for the table showing the user's quiz taking history
+	 * @param owner
+	 * @param friendship
+	 * @param privacy_quiz_take
+	 * @param privacy_quiz_score
+	 * @param shortInd
+	 * @param order
+	 * @return
+	 */
+	private String getQuizTakeHistHTML(String owner,
+										 int 	friendship,
+										 int 	privacy_quiz_take,
+										 int 	privacy_quiz_score, 
+										 String shortInd, 
+										 Integer order)
+	{
+		StringBuilder sb = new StringBuilder();
+		if(friendship > privacy_quiz_take){ // do not display
+			sb.append("<font color=\"red\"><i>User do not want to share this information</i></font>\n");
+		}else{
+			sb.append("<table style=\"width:80%\">\n");
+			sb.append("<tr>\n");
+			sb.append("<th><a href=\"MyPageServlet?id="+owner+"&tab=qt&ind=qn&order="+getOrder(shortInd,"qn",order).toString()+"\"><font color=\"red\">Quiz Name</font></a></th>\n");
+			if(friendship > privacy_quiz_score)
+				sb.append("<th><font color=\"red\">Score</font></th>\n");
+			else
+				sb.append("<th><a href=\"MyPageServlet?id="+owner+"&tab=qt&ind=sc&order="+getOrder(shortInd,"sc",order).toString()+"\"><font color=\"red\">Score</font></a></th>\n");
+			sb.append("<th><a href=\"MyPageServlet?id="+owner+"&tab=qt&ind=tu&order="+getOrder(shortInd,"tu",order).toString()+"\"><font color=\"red\">Time Used</font></a></th>\n");
+			sb.append("<th><a href=\"MyPageServlet?id="+owner+"&tab=qt&ind=da&order="+getOrder(shortInd,"da",order).toString()+"\"><font color=\"red\">Date</font></a></th>\n");
+			sb.append("</tr>\n");
+			ArrayList<UserQuizTake> histList = UserQuizTake.quizTakeHist(owner,shortInd,order,-1);
+			String score;
+			for(UserQuizTake hist: histList){
+				sb.append("<tr>\n");
+				sb.append("<td align=\"center\"><a href=\"QuizSummaryPage.jsp?ID="+hist.quizID+"\">"+hist.quizName+"</a>"+"</td>\n");
+				if(friendship > privacy_quiz_score)
+					score = new String("hidden");
+				else
+					score = Integer.toString(hist.score);
+				sb.append("<td align=\"center\">"+score+"</td>\n");
+				sb.append("<td align=\"center\">"+hist.timeUsed/1000.0+"</td>\n");
+				sb.append("<td align=\"center\">"+hist.date+"</td>\n");
+				sb.append("</tr>\n");
+			}
+			sb.append("</table>\n");
+		}
+		return sb.toString();
+	}
+	
+	
+	/**
+	 * return the HTML code for the table showing the user's quiz creating history
+	 * @param owner
+	 * @param friendship
+	 * @param privacy_quiz_create
+	 * @param shortInd
+	 * @param order
+	 * @return
+	 */
+	private String getQuizCreateHistHTML(String	owner,
+			 						   	 int 	friendship,
+			 						   	 int 	privacy_quiz_create, 
+			 						   	 String shortInd, 
+			 						   	 Integer order){
+		StringBuilder sb = new StringBuilder();
+		if(friendship > privacy_quiz_create){ // do not display
+			sb.append("<font color=\"red\"><i>User do not want to share this information</i></font>\n");
+		}else{
+			sb.append("<table style=\"width:80%\">\n");
+			sb.append("<tr>\n");
+			sb.append("<th><a href=\"MyPageServlet?id="+owner+"&tab=qc&ind=qn&order="+getOrder(shortInd,"qn",order).toString()+"\"><font color=\"red\">Quiz Name</font></a></th>\n");
+			sb.append("<th><a href=\"MyPageServlet?id="+owner+"&tab=qc&ind=nt&order="+getOrder(shortInd,"nt",order).toString()+"\"><font color=\"red\">Taken Number</font></a></th>\n");
+			sb.append("<th><a href=\"MyPageServlet?id="+owner+"&tab=qc&ind=ra&order="+getOrder(shortInd,"ra",order).toString()+"\"><font color=\"red\">Rating</font></a></th>\n");
+			sb.append("<th><a href=\"MyPageServlet?id="+owner+"&tab=qc&ind=da&order="+getOrder(shortInd,"da",order).toString()+"\"><font color=\"red\">Created Date</font></a></th>\n");
+			sb.append("</tr>\n");
+			ArrayList<UserQuizCreate> histList = UserQuizCreate.quizCreateHist(owner,shortInd,order,-1);
+			for(UserQuizCreate hist: histList){
+				sb.append("<tr>\n");
+				sb.append("<td align=\"center\"><a href=\"QuizSummaryPage.jsp?ID="+hist.quizID+"\">"+hist.quizName+"</a>"+"</td>\n");
+				sb.append("<td align=\"center\">"+hist.numTaken+"</td>\n");
+				sb.append("<td align=\"center\">"+hist.rating+"</td>\n");
+				sb.append("<td align=\"center\">"+hist.date+"</td>\n");
+				sb.append("</tr>\n");
+			}
+			sb.append("</table>\n");
+		}
+		return sb.toString();
+	}
+	
+	
+	private String getAccountSettingHTML(UserAccount ownerAcc, int friendship){
+		StringBuilder sb = new StringBuilder();
+		if(friendship == 0){
+			sb.append("<form action=\"ModifyAccountServlet\" method=\"post\" id=\"updateAcc\">\n");
+			sb.append("<p>Your Username: <input type=\"text\" value=\""+ownerAcc.username+"\" disabled/></p>\n");
+			sb.append("<p>Display Name: <input type=\"text\" name=\"displayname\" value=\""+ownerAcc.displayname+"\" id=\"dName\"/></p>\n");
+			sb.append("<p>Who can see my quiz taking history:\n");
+			sb.append("<input type=\"radio\" name=\"privacy_quiz_take\" value=\"0\""+isChecked(ownerAcc.privacy_quiz_take,0)+"/> Myself\n");
+			sb.append("<input type=\"radio\" name=\"privacy_quiz_take\" value=\"1\""+isChecked(ownerAcc.privacy_quiz_take,1)+"/> My friends\n");
+			sb.append("<input type=\"radio\" name=\"privacy_quiz_take\" value=\"3\""+isChecked(ownerAcc.privacy_quiz_take,3)+"/> Everyone\n");
+			sb.append("</p>\n");
+			sb.append("<p>Who can see my quiz creating history:\n");
+			sb.append("<input type=\"radio\" name=\"privacy_quiz_create\" value=\"0\""+isChecked(ownerAcc.privacy_quiz_create,0)+"/> Myself\n");
+			sb.append("<input type=\"radio\" name=\"privacy_quiz_create\" value=\"1\""+isChecked(ownerAcc.privacy_quiz_create,1)+"/> My friends\n");
+			sb.append("<input type=\"radio\" name=\"privacy_quiz_create\" value=\"3\""+isChecked(ownerAcc.privacy_quiz_create,3)+"/> Everyone\n");
+			sb.append("</p>\n");
+			sb.append("<p>Who can see my quiz scores:\n");
+			sb.append("<input type=\"radio\" name=\"privacy_quiz_score\" value=\"0\""+isChecked(ownerAcc.privacy_quiz_score,0)+"/> Myself\n");
+			sb.append("<input type=\"radio\" name=\"privacy_quiz_score\" value=\"1\""+isChecked(ownerAcc.privacy_quiz_score,1)+"/> My friends\n");
+			sb.append("<input type=\"radio\" name=\"privacy_quiz_score\" value=\"3\""+isChecked(ownerAcc.privacy_quiz_score,3)+"/> Everyone\n");
+			sb.append("</p>\n");
+			sb.append("<p>Who can see my achievements:\n");
+			sb.append("<input type=\"radio\" name=\"privacy_achieve\" value=\"0\""+isChecked(ownerAcc.privacy_achieve,0)+"/> Myself\n");
+			sb.append("<input type=\"radio\" name=\"privacy_achieve\" value=\"1\""+isChecked(ownerAcc.privacy_achieve,1)+"/> My friends\n");
+			sb.append("<input type=\"radio\" name=\"privacy_achieve\" value=\"3\""+isChecked(ownerAcc.privacy_achieve,3)+"/> Everyone\n");
+			sb.append("</p>\n");
+			sb.append("<p><input type=\"submit\" value=\"Update\"/></p>\n");
+			sb.append("</form>\n");
+			
+			// Javascript section
+			sb.append("<script type=\"text/javascript\" src=\"https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js\"></script>\n");
+			sb.append("<script type=\"text/javascript\">\n");
+			sb.append("var form = $('#updateAcc');\n");
+			sb.append("form.submit(function (){\n");
+			sb.append("$.ajax({\n");
+			sb.append("type: form.attr('method'),\n");
+			sb.append("url: form.attr('action'),\n");
+			sb.append("data: form.serialize(),\n");
+			sb.append("async: false,\n");
+			sb.append("success: function(msg){\n");
+			sb.append("var displayName = document.getElementById(\"dName\").value;\n"); //bug
+			sb.append("$('#display').html(displayName+\" Personal Page\");\n");
+			sb.append("alert(msg);\n");
+			sb.append("}\n");
+			sb.append("});\n");
+			sb.append("return false;\n");
+			sb.append("});\n");
+			sb.append("</script>\n");
+			// End of Javascript section
+		}else{
+			sb.append("<font color=\"red\" size=\"5\">You are not the owner of this user page!</font>");
+			sb.append("<a href=\"homepage.jsp\">Go Back to Home Page</a>");
+		}
+		return sb.toString();
+	}
+	
+	
+	private String getAchievementsHTML(String owner,int friendship, int privacy_achieve){
+		StringBuilder sb = new StringBuilder();
+		if(friendship > privacy_achieve){
+			sb.append("<font color=\"red\"><i>User do not want to share this information</i></font>\n");
+		}else{
+			Set<String> achieveNot = new HashSet<String>(Achievement.achievementList.keySet());
+			Set<String> achieveGot = Achievement.getAchievement(owner);
+			if(achieveGot == null){
+				sb = new StringBuilder("<font color=\"red\">User not exists!</font>\n");
+				return sb.toString();
+			}
+			achieveNot.removeAll(achieveGot);
+			
+			// acquired achievements
+			sb.append("<table align=\"left\" style=\"width:50%\">\n");
+			sb.append("<tr>\n");
+			sb.append("<th>Acquired Achievements</th>\n");
+			sb.append("<th>Description</th>\n");
+			sb.append("</tr>\n");
+			int imgHei = 60, imgWid = 60;
+			for(String title: achieveGot){
+				Achievement ach = Achievement.achievementList.get(title);
+				sb.append("<tr>\n");
+				sb.append("<td align=\"left\"><img src=\""+ach.img+"\" alt=\""+title+"\" height=\""+
+						imgHei+"\" width=\""+imgWid+"\"/>   "+title+"</td>\n");
+				sb.append("<td>"+ach.desc+"</td>\n");
+				sb.append("</tr>\n");
+			}
+			sb.append("</table>\n");
+			
+			// not yet acquired achievements
+			sb.append("<table align=\"right\" style=\"width:50%\">\n");
+			sb.append("<tr>\n");
+			sb.append("<th>Achievements Not Yet Acquired</th>\n");
+			sb.append("<th>Description</th>\n");
+			sb.append("</tr>\n");
+			for(String title: achieveNot){
+				Achievement ach = Achievement.achievementList.get(title);
+				sb.append("<tr>\n");
+				sb.append("<td align=\"left\"><img src=\""+ach.img+"\" alt=\""+title+"\" height=\""+
+						imgHei+"\" width=\""+imgWid+"\"/>   "+title+"</td>\n");
+				sb.append("<td>"+ach.desc+"</td>\n");
+				sb.append("</tr>\n");
+			}
+			sb.append("</table>\n");
+		}
+		return sb.toString();
+	}
+	
+	
+	private String tableTitle(String tab){
+		if(tab.equals("qt")){
+			return "Quiz Taking History";
+		}else if(tab.equals("qc")){
+			return "Quiz Creating History";
+		}else if(tab.equals("ac")){
+			return "Account Setting";
+		}else{
+			return "Achievement";
+		}
+	}
+	
+	
+	/**
+	 * Compare the current order index and the index to be selected.
+	 * If same, flip the order; else, set order = 1
+	 * @param currentshortInd
+	 * @param shortInd
+	 * @param order
+	 * @return 
+	 */
+	private Integer getOrder(String currentshortInd, String shortInd, Integer order){
+		return currentshortInd.equals(shortInd)? -order: 1;
+	}
+	
+	/**
+	 * return if checked if current privacy == radio option
+	 * @param cur
+	 * @param toCheck
+	 * @return
+	 */
+	private String isChecked(int cur, int toCheck){
+		if(cur == toCheck)
+			return " checked";
+		else
+			return "";
+	}
+}

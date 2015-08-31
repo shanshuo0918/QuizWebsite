@@ -1,0 +1,157 @@
+package quiz;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+
+import javax.servlet.http.HttpServletRequest;
+
+import database.DBConnection;
+
+public class MultipleAnswer extends Question {
+	protected final int numOfAns;
+	protected final boolean isOrder;
+	
+	public MultipleAnswer(String questionType, String questionID) {
+		super(questionType, questionID);
+		String query = "SELECT * FROM " + questionTypeTable + " WHERE questionID = \"" + questionID + "\"";
+		int tempNumOfAns = 0;
+		boolean tempIsOrder = false;
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			rs.next();
+			tempNumOfAns = Integer.parseInt(rs.getString(7));
+			tempIsOrder = Boolean.parseBoolean(rs.getString(8));
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		this.numOfAns = tempNumOfAns;
+		this.isOrder = tempIsOrder;
+	}
+	
+	public MultipleAnswer(String quizID, int timeLimit,
+			String question, String answer, int score, int numOfAns, boolean isOrder) {
+		super("MA", quizID, timeLimit, question, answer, score);
+		this.numOfAns = numOfAns;
+		this.isOrder = isOrder;
+	}
+	
+	@Override
+	public String getUserAnswer(HttpServletRequest request) {
+		ArrayList<String> userAnswer  = new ArrayList<String>();
+		for (int i = 0; i < numOfAns; i ++) {
+			userAnswer.add(request.getParameter("answer_" + questionID + "_" + i));
+		}
+		
+		String result = "";
+		for (int i = 0; i < userAnswer.size() - 1; i++) {
+			result += userAnswer.get(i);
+			result += "|";
+		}
+		result += userAnswer.get(userAnswer.size() - 1);
+		
+		return result;
+	}
+	
+	@Override
+	public int getScore(String userAnswer) {
+		ArrayList<String> userAnswerList = getArrayList(userAnswer);
+		int correct = 0;
+		ArrayList<String> answerList = getAnswerList();
+		if (isOrder) {
+			for (int i = 0; i < numOfAns; i++) {
+				if (answerList.get(i).equalsIgnoreCase(userAnswerList.get(i))) {
+					correct ++;
+				}
+			}
+		} else {
+			while(!userAnswerList.isEmpty()) {
+				String next = userAnswerList.remove(0);
+				for (int i = 0; i < answerList.size(); i++) {
+					if (answerList.get(i).equalsIgnoreCase(next)) {
+						correct++;
+						answerList.remove(i);
+					} 
+				}
+			}
+		}
+		return correct * score;
+	}
+	
+	@Override
+	public int getMaxScore() {
+		return score * numOfAns;
+	}
+	
+	@Override
+	public void updateQuestion(HttpServletRequest request) {
+		String question = request.getParameter("questionDescription");
+		String answer = QuestionHelper.answerFormatter(request.getParameter("answer"));
+		int timeLimit = 0;
+		if (request.getParameter("time") != "") {
+			timeLimit = Integer.parseInt(request.getParameter("time"));
+		}		
+		int numOfAns = QuestionHelper.countNumOfAns(answer);
+		boolean isOrder = Boolean.parseBoolean(request.getParameter("isOrder"));
+		String query = "Update " + questionTypeTable + " SET question = \"" + question + "\", answer = \"" + answer +
+				"\", timeLimit = \"" + timeLimit + "\", numOfAns = " + numOfAns + ", isOrder = " + isOrder +  
+				" WHERE questionID = \"" + questionID + "\";";
+		System.out.println(query);
+		try {
+			Connection con = DBConnection.getConnection();
+			Statement stmt = con.createStatement();
+			stmt.executeUpdate(query);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	public String editQuestionPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("<h3>You are creating a Question-Response question!</h3>\n");
+		page.append("Question (Please type your question in the textAera below): <br>");
+		page.append("<textarea name=\"questionDescription\" rows=\"10\" cols=\"60\" required>" + question + "</textarea><br>");
+		page.append("Answer (If you have mutiple possible anwsers, please put them in different line): <br>");
+		page.append("<textarea name=\"answer\" rows=\"5\" cols=\"60\" required></textarea><br>");
+		page.append("<input type=\"checkbox\" name=\"isOrder\">Answer must in given order<br>");
+		page.append("Time Limit (If you wish to create a limit time question, please provide the time limit): "
+				+ "<input type=\"text\" name=\"time\" value =\"" + timeLimit + "\"><br>");
+		return page.toString();
+	}
+	
+	@Override
+	public String doQuizPage() {
+		StringBuilder page = new StringBuilder();
+		page.append("This is a Multiple-Answer question, please input your answer in the text box! <br>");
+		if (isOrder) {
+			page.append("Please input your answer with the order required by the question! <br>");
+		}
+		page.append("<h4>Question: " + question + "</h4>");
+		for (int i = 0; i < numOfAns; i++) {
+			page.append("Your Answer: <input type=\"text\" name=\"answer_" + questionID + "_" + i + "\" required/> <br>");
+		}
+		return page.toString();
+	}
+	
+	protected ArrayList<String> getArrayList(String str) {
+		ArrayList<String> list = new ArrayList<String>();
+		int start = 0;
+		int end = 0;
+		while (end < str.length() - 1) {
+			if (str.charAt(end) == '|') {
+				list.add(str.substring(start, end));
+				start = end + 1;
+			}
+			end ++;
+		}
+		list.add(str.substring(start));
+		return list;
+	}
+	
+	
+}
